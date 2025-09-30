@@ -1,1 +1,84 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>PPM TABUK • Import Excel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+<style> body{background:#0b1220;color:#e5e7eb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial} .card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:16px;margin:16px auto;max-width:900px} .btn{padding:.6rem .9rem;border-radius:10px;font-weight:800} .btn1{background:#10b981;color:#062a24} .btn2{background:#0ea5e9;color:#06243b} .inp{background:#0b1220;border:1px solid #334155;border-radius:10px;padding:.6rem .8rem}</style>
+</head>
+<body>
+<div class="card">
+  <h1 class="text-xl font-extrabold mb-2">استيراد Excel إلى Firestore</h1>
+  <p class="text-slate-400 mb-3">الأعمدة المدعومة: <b>control, name, brand, serial, site, department, location, tech, pm_date</b>. سيتم حساب <b>next_date</b> تلقائيًا.</p>
+  <div class="flex items-center gap-2 flex-wrap mb-3">
+    <input id="file" type="file" accept=".xlsx,.xls" class="inp"/>
+    <button id="btnTemplate" class="btn btn2">تحميل نموذج</button>
+    <button id="btnImport" class="btn btn1">استيراد</button>
+  </div>
+  <div id="log" class="text-sm text-slate-300 whitespace-pre-wrap"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+const firebaseConfig = {apiKey:"AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",authDomain:"pmqrtabuk.firebaseapp.com",projectId:"pmqrtabuk",storageBucket:"pmqrtabuk.firebasestorage.app",messagingSenderId:"305570616285",appId:"1:305570616285:web:4f6839fd08b8b5aa131c34"};
+const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
+
+const $=s=>document.querySelector(s);
+const log = (m)=> $('#log').textContent += m + "\n";
+const toISO = d => new Date(d).toISOString().slice(0,10);
+const addMonths = (dateObj, n)=>{ const d=new Date(dateObj); d.setMonth(d.getMonth()+n); return d; };
+const calcNext = pm => pm ? toISO(addMonths(new Date(pm),6)) : '';
+const safeId = s => (s||'').trim().replace(/[\/#?\s]/g,'-');
+
+let user=null;
+onAuthStateChanged(auth, u=>{ if(!u){ location.href='login.html'; } else { user=u; } });
+
+document.getElementById('btnTemplate').onclick = ()=>{
+  const rows=[{control:'AS-0001',name:'ECG Machine',brand:'GE',serial:'SN123',site:'Hospital A',department:'ICU',location:'Bed 3',tech:'Ali',pm_date:'2025-09-01'}];
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Template');
+  XLSX.writeFile(wb, 'ppm_template.xlsx');
+};
+
+document.getElementById('btnImport').onclick = async ()=>{
+  if(!user){ alert('سجل دخول أولًا'); return; }
+  const f = $('#file').files[0];
+  if(!f){ alert('اختر ملف'); return; }
+  const buf = await f.arrayBuffer();
+  const wb = XLSX.read(buf, {type:'array'});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const arr = XLSX.utils.sheet_to_json(ws, {defval:''});
+  let ok=0, fail=0;
+  for(const r of arr){
+    try{
+      const control = String(r.control||'').trim();
+      if(!control){ fail++; log('سطر بدون control — تم تجاوزه'); continue; }
+      const pm = String(r.pm_date||'').trim();
+      const next = calcNext(pm);
+      const payload = {
+        control,
+        name   : String(r.name||'').trim(),
+        brand  : String(r.brand||'').trim(),
+        serial : String(r.serial||'').trim(),
+        site   : String(r.site||'').trim(),
+        department: String(r.department||'').trim(),
+        location: String(r.location||'').trim(),
+        tech   : String(r.tech||'').trim(),
+        pm_date: pm,
+        next_date: next,
+        updatedAt: serverTimestamp()
+      };
+      await setDoc(doc(db,'assets', safeId(control)), payload, { merge:true });
+      ok++; log('✔ تم: ' + control);
+    }catch(e){ fail++; log('✖ فشل: ' + (r.control||'?') + ' — ' + e.message); }
+  }
+  log(`\nالنتيجة: تم ${ok} / فشل ${fail}`);
+};
+</script>
+</body>
+</html>
 
