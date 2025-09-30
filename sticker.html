@@ -1,221 +1,249 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PPM Tabuk – QR</title>
+<title>PPM Tabuk – Sticker (No QR)</title>
 <style>
   :root{
-    --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --card:#fff;
-    --badge:#0ea5e9;
+    /* المقاس الأصلي للكارت (Landscape) */
+    --card-w: 110mm;
+    --card-h: 70mm;
+
+    --pad: 6mm;
+    --head-h: 14mm;
+
+    --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
+    --ok:#16a34a; --late:#ef4444;
+    --fs: 11px;
   }
+
   *{box-sizing:border-box}
-  html,body{margin:0;padding:0;background:#0b1220;color:#e5e7eb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  html,body{margin:0;padding:0;height:100%;background:#f3f4f6;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
 
-  .container{max-width:1100px;margin:0 auto;padding:16px}
-  h1{margin:6px 0 14px}
-  .card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:14px;margin:10px 0;box-shadow:0 10px 26px rgba(0,0,0,.28)}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0}
-  input,select{padding:10px 12px;border-radius:10px;border:1px solid #374151;background:#0b1220;color:#fff;min-width:220px}
-  .btn{padding:10px 14px;border-radius:10px;border:0;background:#10b981;color:#062e26;font-weight:700;cursor:pointer}
-  .btn.secondary{background:#3b82f6;color:#e0f2fe}
-  .hint{color:#93c5fd;font-size:13px}
-
-  /* بطاقة الطباعة */
-  .sheet{background:#f8fafc;color:#111827;display:grid;gap:12px}
-  /* وضع A4: شبكة */
-  .sheet.a4{grid-template-columns:repeat(3, 1fr)}
-  /* بطاقة QR */
-  .qr-card{
-    background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;gap:6px
+  /* المسرح يملأ الشاشة؛ هنحطّ فيه الكارت ونديره/نكبّره ديناميكياً */
+  .stage{
+    position:fixed; inset:0; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
   }
-  .qr-title{font-weight:800;font-size:13px;margin:0}
-  .qr-img{width:180px;height:180px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;display:block}
-  .qr-ctrl{font-weight:800;letter-spacing:.2px}
 
-  /* وضع 6×4 سم: بطاقة واحدة بالحجم المطلوب */
-  .sheet.six-four{grid-template-columns:1fr}
-  .qr-card.six-four{width:60mm;height:40mm;justify-content:center;padding:3mm 4mm}
-  .qr-card.six-four .qr-title{font-size:10px}
-  .qr-card.six-four .qr-img{width:22mm;height:22mm}
-  .qr-card.six-four .qr-ctrl{font-size:11px}
+  /* الكارت نفسه بمقاس ثابت (هنعمل له scale/rotate بالـ JS) */
+  .card{
+    width:var(--card-w); height:var(--card-h);
+    background:#fff; border:2px solid var(--line); border-radius:12px;
+    box-shadow:0 12px 30px rgba(0,0,0,.12);
+    display:grid; grid-template-rows: var(--head-h) 1fr; padding:0 var(--pad) var(--pad);
+    position:relative;
+  }
+  .card.ok{ border-color:var(--ok) }
+  .card.late{ border-color:var(--late) }
 
-  /* طباعة */
+  /* الهيدر */
+  .head{ height:var(--head-h); display:flex; align-items:center; justify-content:space-between; gap:8mm }
+  .head .logo{ max-height:11mm; width:auto; object-fit:contain; display:block }
+  .title{ font-weight:800; font-size:14px; white-space:nowrap; margin:0 auto }
+
+  /* جسم الكارت: جدول مرتّب عمودين (Label / Value) */
+  .body{
+    margin-top:6mm;
+    display:grid; grid-template-columns: 30% 70%;
+    column-gap:6mm; row-gap:3.2mm; font-size:var(--fs); line-height:1.28;
+    text-align:left; direction:ltr;
+  }
+  .k{ color:var(--muted); }
+  .v{ font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* علامة منتهي (مائية) */
+  .watermark{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:34px; color:rgba(239,68,68,.18); font-weight:900; transform:rotate(-18deg);
+    pointer-events:none; z-index:0;
+  }
+
+  /* شريط الأدوات */
+  .toolbar{
+    position:fixed; left:0; right:0; bottom:12px;
+    display:flex; gap:10px; justify-content:center;
+  }
+  .btn{ padding:10px 14px; border:1px solid var(--line); background:#fff; border-radius:10px; font-weight:700; cursor:pointer }
+
+  /* الطباعة (لو حبيت من المتصفح) */
   @media print{
-    @page{size:A4;margin:8mm}
-    body{background:#fff}
-    .card, .controls, .hint{display:none !important}
-    .sheet{margin:0}
+    @page{ size:landscape; margin:8mm }
+    body{ background:#fff }
+    .toolbar{ display:none }
+    .stage{ inset:auto; position:relative; height:auto }
+    .card{ box-shadow:none; margin:0 auto }
   }
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="card controls">
-    <h1>توليد أكواد QR</h1>
-    <div class="row">
-      <select id="size">
-        <option value="a4" selected>تخطيط A4 (شبكة متعددة)</option>
-        <option value="six-four">ملصق منفرد 6 × 4 سم</option>
-      </select>
-      <button class="btn secondary" id="printBtn">طباعة</button>
-      <span class="hint">مهم: أي مسح للكود هيفتح صفحة الاستيكر مباشرة.</span>
-    </div>
-    <div class="row">
-      <input id="ctrl" placeholder="Control Number (مثال: AS-0001)"/>
-      <button class="btn" id="addOne">إضافة جهاز واحد</button>
-    </div>
-    <div class="row">
-      <select id="site"></select>
-      <select id="dept"></select>
-      <button class="btn" id="addDept">إضافة كل أجهزة القسم</button>
-      <span class="hint">اختياري: لو اخترت الموقع → هنملأ الأقسام التابعة له تلقائيًا.</span>
+  <!-- المسرح: هنقيّس ونلفّ الكارت جواه -->
+  <div class="stage" id="stage">
+    <div class="card" id="card">
+      <div class="head">
+        <img class="logo" id="logoCompany" alt="FGC"/>
+        <div class="title">Preventive Maintenance</div>
+        <img class="logo" id="logoCluster" alt="Tabuk"/>
+      </div>
+
+      <div class="body">
+        <div class="k">Control</div>     <div class="v" id="v_control">—</div>
+        <div class="k">Name</div>        <div class="v" id="v_name">—</div>
+        <div class="k">Brand</div>       <div class="v" id="v_brand">—</div>
+        <div class="k">Serial</div>      <div class="v" id="v_serial">—</div>
+        <div class="k">PM Date</div>     <div class="v" id="v_pm">—</div>
+        <div class="k">Next PM</div>     <div class="v" id="v_next">—</div>
+        <div class="k">Technician</div>  <div class="v" id="v_tech">—</div>
+        <div class="k">Site</div>        <div class="v" id="v_site">—</div>
+        <div class="k">Department</div>  <div class="v" id="v_dept">—</div>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <div id="sheet" class="sheet a4"></div>
+  <div class="toolbar">
+    <button class="btn" id="pdfBtn">Download PDF</button>
   </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<script type="module">
-/* ================= Firebase ================= */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+  <!-- PDF tools -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
-const firebaseConfig = {
-  apiKey:"AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
-  authDomain:"pmqrtabuk.firebaseapp.com",
-  projectId:"pmqrtabuk",
-  storageBucket:"pmqrtabuk.firebasestorage.app",
-  messagingSenderId:"305570616285",
-  appId:"1:305570616285:web:4f6839fd08b8b5aa131c34"
-};
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+  <!-- Firestore + منطق الصفحة -->
+  <script type="module">
+  /* ===== شعارات: حدّد روابطك المباشرة (أو سيب الاحتياطيات) ===== */
+  const COMPANY_LOGO_URL = "https://YOUR-USER.github.io/YOUR-REPO/assets/FGC.jpeg";
+  const CLUSTER_LOGO_URL = "https://YOUR-USER.github.io/YOUR-REPO/assets/TabukCluster.jpeg";
+  const FALLBACK_COMPANY = ["assets/FGC.jpeg","FGC.jpeg"];
+  const FALLBACK_CLUSTER = ["assets/TabukCluster.jpeg","TabukCluster.jpeg"];
 
-/* ================= Helpers ================= */
-const $ = s=>document.querySelector(s);
-const $$ = s=>document.querySelectorAll(s);
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+  import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-function safeId(s){ return (s||'').trim().replace(/[\/#?\s]/g,'-'); }
-
-/* الرابط الصحيح لصفحة الاستيكر */
-function stickerURL(control) {
-  const baseDir = location.origin + location.pathname.replace(/\/[^/]*$/, '/');
-  return baseDir + 'sticker.html#view/' + encodeURIComponent(control);
-}
-
-/* توليد عنصر بطاقة QR واحدة */
-function makeQRCard(control, small=false){
-  const card = document.createElement('div');
-  card.className = 'qr-card' + (small ? ' six-four' : '');
-  const title = document.createElement('div');
-  title.className = 'qr-title';
-  title.textContent = 'Preventive Maintenance';
-  const img = document.createElement('img');
-  img.className = 'qr-img';
-  img.alt = 'QR';
-  const ctrl = document.createElement('div');
-  ctrl.className = 'qr-ctrl';
-  ctrl.textContent = control;
-
-  card.appendChild(title);
-  card.appendChild(img);
-  card.appendChild(ctrl);
-
-  const url = stickerURL(control);
-  QRCode.toDataURL(url, {width: small? 220 : 360, margin: 0})
-    .then(u => img.src = u)
-    .catch(()=> img.src = 'https://chart.googleapis.com/chart?cht=qr&chs=360x360&chl='+encodeURIComponent(url));
-
-  return card;
-}
-
-/* تحميل مواقع وأقسام مميزة من الأصول */
-async function loadSitesDepts(){
-  const siteSel = $('#site'), deptSel = $('#dept');
-  siteSel.innerHTML = `<option value="">الموقع (اختياري)</option>`;
-  deptSel.innerHTML = `<option value="">القسم (اختياري)</option>`;
-
-  const qs = await getDocs(collection(db,'assets'));
-  const sites = new Set(); const bySite = {};
-  qs.forEach(d=>{
-    const a=d.data();
-    if(a.site){ sites.add(a.site); bySite[a.site]=bySite[a.site]||new Set(); if(a.department) bySite[a.site].add(a.department); }
-  });
-
-  [...sites].sort().forEach(s=>{
-    const o=document.createElement('option'); o.value=o.textContent=s; siteSel.appendChild(o);
-  });
-
-  siteSel.onchange = ()=>{
-    const s=siteSel.value;
-    deptSel.innerHTML = `<option value="">القسم (اختياري)</option>`;
-    if(!s || !bySite[s]) return;
-    [...bySite[s]].sort().forEach(d=>{
-      const o=document.createElement('option'); o.value=o.textContent=d; deptSel.appendChild(o);
-    });
+  const firebaseConfig = {
+    apiKey:"AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
+    authDomain:"pmqrtabuk.firebaseapp.com",
+    projectId:"pmqrtabuk",
+    storageBucket:"pmqrtabuk.firebasestorage.app",
+    messagingSenderId:"305570616285",
+    appId:"1:305570616285:web:4f6839fd08b8b5aa131c34"
   };
-}
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
 
-/* إضافة جهاز واحد */
-$('#addOne').onclick = async ()=>{
-  const control = $('#ctrl').value.trim();
-  if(!control) return alert('اكتب الكنترول نمبر');
-  const size = $('#size').value;
-  const sheet = $('#sheet');
-  if(size==='six-four'){ sheet.classList.remove('a4'); sheet.classList.add('six-four'); sheet.innerHTML=''; }
-  else{ sheet.classList.remove('six-four'); sheet.classList.add('a4'); }
-
-  // لو عايز تتأكد إنه موجود في الداتا
-  const snap = await getDocs(query(collection(db,'assets'), where('control','==', control)));
-  if(snap.empty){
-    // مسموح نطبع QR حتى لو لسه مضافش؟ لو لأ، علّق السطرين الجايين
-    // alert('الجهاز غير موجود في قاعدة البيانات'); return;
+  const $ = s=>document.querySelector(s);
+  const safeId = s => (s||"").trim().replace(/[\/#?\s]/g,"-");
+  const fmt = d => d ? new Date(d).toISOString().slice(0,10) : "—";
+  function statusOf(pm_date, next_date){
+    if(!next_date) return "active";
+    const t=new Date(); t.setHours(0,0,0,0);
+    const n=new Date(next_date); n.setHours(0,0,0,0);
+    const grace=new Date(n); grace.setDate(grace.getDate()+30);
+    return (t>grace)?"overdue":"active";
   }
-  sheet.appendChild(makeQRCard(control, $('#size').value==='six-four'));
-  $('#ctrl').value='';
-};
+  async function setImg(img, primary, fallbacks=[]){
+    const list=[primary,...fallbacks.map(p=> new URL(p, location.href).href)];
+    for(const url of list){
+      if(!url) continue;
+      const ok = await new Promise(res=>{
+        const i=new Image(); i.onload=()=>res(true); i.onerror=()=>res(false); i.src=url;
+      });
+      if(ok){ img.src=url; return; }
+    }
+    img.style.display='none';
+  }
 
-/* إضافة كل أجهزة القسم */
-$('#addDept').onclick = async ()=>{
-  const site = $('#site').value.trim();
-  const dept = $('#dept').value.trim();
-  if(!site || !dept) return alert('اختَر الموقع والقسم أولاً');
+  async function loadSticker(){
+    await Promise.all([
+      setImg($('#logoCompany'), COMPANY_LOGO_URL, FALLBACK_COMPANY),
+      setImg($('#logoCluster'), CLUSTER_LOGO_URL, FALLBACK_CLUSTER),
+    ]);
 
-  const size = $('#size').value;
-  const sheet = $('#sheet');
-  if(size==='six-four'){ sheet.classList.remove('a4'); sheet.classList.add('six-four'); sheet.innerHTML=''; }
-  else{ sheet.classList.remove('six-four'); sheet.classList.add('a4'); }
+    const controlRaw = (location.hash||"").split('/')[1] ? decodeURIComponent((location.hash||"").split('/')[1]) : "";
+    if(!controlRaw) return;
 
-  const q = query(
-    collection(db,'assets'),
-    where('site','==', site),
-    where('department','==', dept)
-  );
-  const qs = await getDocs(q);
-  if(qs.empty) return alert('لا توجد أجهزة لهذا القسم');
+    let snap = await getDoc(doc(db,'assets', safeId(controlRaw)));
+    if(!snap.exists()){
+      const qs = await getDocs(query(collection(db,'assets'), where('control','==', controlRaw)));
+      snap = qs.docs[0];
+    }
+    if(!snap || !snap.exists()) return;
 
-  qs.forEach(d=>{
-    const a=d.data();
-    if(a.control) sheet.appendChild(makeQRCard(a.control, size==='six-four'));
+    const d = snap.data();
+
+    $('#v_control').textContent = d.control || controlRaw;
+    $('#v_name').textContent    = d.name   || "—";
+    $('#v_brand').textContent   = d.brand  || "—";
+    $('#v_serial').textContent  = d.serial || "—";
+    $('#v_pm').textContent      = fmt(d.pm_date);
+    $('#v_next').textContent    = fmt(d.next_date);
+    $('#v_tech').textContent    = d.tech   || "—";
+    $('#v_site').textContent    = d.site   || "—";
+    $('#v_dept').textContent    = d.department || "—";
+
+    // حالة البطاقة
+    const card = $('#card');
+    card.classList.remove('ok','late');
+    [...card.querySelectorAll('.watermark')].forEach(x=>x.remove());
+    if(statusOf(d.pm_date, d.next_date)==='overdue'){
+      card.classList.add('late');
+      const wm=document.createElement('div'); wm.className='watermark'; wm.textContent='Expired'; card.appendChild(wm);
+    }else{
+      card.classList.add('ok');
+    }
+  }
+
+  // تدوير/تكبير الكارت تلقائيًا حسب اتجاه الشاشة
+  function layout(){
+    const stage = $('#stage');
+    const card  = $('#card');
+    const cw = mmToPx(getComputedStyle(card).getPropertyValue('--card-w'));
+    const ch = mmToPx(getComputedStyle(card).getPropertyValue('--card-h'));
+    const vw = window.innerWidth, vh = window.innerHeight;
+
+    // Portrait → لفّ الكارت 90° وخليه يناسب الشاشة
+    if (vh > vw){
+      const scale = Math.min(vw / ch, vh / cw) * 0.98; // لأننا هنبدّل w,h بعد اللف
+      card.style.transformOrigin = 'center center';
+      card.style.transform = `rotate(90deg) scale(${scale})`;
+    } else {
+      const scale = Math.min(vw / cw, vh / ch) * 0.98;
+      card.style.transformOrigin = 'center center';
+      card.style.transform = `scale(${scale})`;
+    }
+  }
+  function mmToPx(mmString){
+    const mm = parseFloat(mmString);
+    // تحويل تقريبي: 1mm ≈ 3.7795px (96dpi)
+    return mm * 3.7795;
+  }
+  window.addEventListener('resize', layout);
+  window.addEventListener('orientationchange', layout);
+
+  // Download PDF
+  document.getElementById('pdfBtn').addEventListener('click', async ()=>{
+    const { jsPDF } = window.jspdf;
+    const node = document.getElementById('card');
+    // نلغي أي transform قبل الالتقاط
+    const prev = node.style.transform;
+    node.style.transform = 'none';
+    await new Promise(r=>setTimeout(r,50));
+    const canvas = await html2canvas(node, {scale:2, backgroundColor:'#ffffff'});
+    const imgData = canvas.toDataURL('image/png');
+
+    // مقاس الصفحة = مقاس الكارت بالميلي
+    const cardWmm = parseFloat(getComputedStyle(node).getPropertyValue('--card-w'));
+    const cardHmm = parseFloat(getComputedStyle(node).getPropertyValue('--card-h'));
+    const pdf = new jsPDF({orientation:'landscape', unit:'mm', format:[cardWmm, cardHmm]});
+    pdf.addImage(imgData, 'PNG', 0, 0, cardWmm, cardHmm);
+    pdf.save((document.getElementById('v_control').textContent || 'sticker') + '.pdf');
+    // رجّع التحويل
+    node.style.transform = prev;
+    layout();
   });
-};
 
-/* طباعة */
-$('#printBtn').onclick = ()=> window.print();
-
-/* تغيير المقاس يمسح/يحافظ على التخطيط فقط */
-$('#size').onchange = ()=>{
-  const sheet = $('#sheet');
-  if($('#size').value==='six-four'){ sheet.classList.remove('a4'); sheet.classList.add('six-four'); }
-  else{ sheet.classList.remove('six-four'); sheet.classList.add('a4'); }
-};
-
-/* بدء التشغيل */
-loadSitesDepts();
-</script>
+  window.addEventListener('load', async ()=>{ await loadSticker(); layout(); });
+  window.addEventListener('hashchange', async ()=>{ await loadSticker(); layout(); });
+  </script>
 </body>
 </html>
