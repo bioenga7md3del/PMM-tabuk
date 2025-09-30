@@ -1,90 +1,221 @@
-
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Welcome to PPM TABUK</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body{min-height:100vh;background:#0b1220;color:#e5e7eb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    .card{background:#0f172a;border:1px solid #1e293b;border-radius:16px;box-shadow:0 12px 36px rgba(0,0,0,.35)}
-    .input{padding:.7rem .9rem;border-radius:12px;background:#0b1220;border:1px solid #334155;width:100%;color:#e5e7eb}
-    .btn{padding:.7rem 1rem;border-radius:12px;font-weight:800}
-    .btn-primary{background:#10b981;color:#062a24}
-    .btn-alt{background:#0ea5e9;color:#06243b}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>PPM Tabuk – Sticker</title>
+<style>
+  :root{
+    --card-w: 110mm;   /* عرض الكارت */
+    --card-h: 70mm;    /* ارتفاع الكارت */
+    --pad: 6mm;
+    --head-h: 22mm;    /* الهيدر بقى أعلى (شعارات + عنوان عربي) */
+    --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
+    --ok:#16a34a; --late:#ef4444;
+    --fs: 11px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#f3f4f6;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+
+  .stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .card{
+    width:var(--card-w); height:var(--card-h);
+    background:#fff;border:2px solid var(--line);border-radius:12px;
+    box-shadow:0 12px 30px rgba(0,0,0,.12);
+    display:grid;grid-template-rows:var(--head-h) 1fr;
+    padding:0 var(--pad) var(--pad);
+    position:relative; overflow:hidden;   /* يمنع خروج أي عنصر خارج الإطار */
+  }
+  .card.ok{border-color:var(--ok)}
+  .card.late{border-color:var(--late)}
+
+  /* الهيدر: صف شعارات + عنوان عربي أسفله */
+  .head{display:grid;grid-template-rows:1fr auto;gap:3mm;padding-top:3mm}
+  .logos{display:flex;align-items:center;justify-content:space-between;gap:10mm;padding:0 2mm}
+  .logo{max-height:9mm;max-width:36mm;object-fit:contain;display:block}
+  .title-ar{font-weight:900;font-size:14px;text-align:center;letter-spacing:.2px}
+
+  /* جسم البيانات */
+  .body{
+    margin-top:4mm;
+    display:grid; grid-template-columns:30% 70%;
+    column-gap:6mm; row-gap:3mm; font-size:var(--fs); line-height:1.28;
+    text-align:left; direction:ltr;      /* إنجليزي من الشمال */
+  }
+  .k{color:var(--muted)}
+  .v{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* وسم “منتهي” */
+  .watermark{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:34px; color:rgba(239,68,68,.18); font-weight:900; transform:rotate(-18deg);
+    pointer-events:none; z-index:0;
+  }
+
+  .toolbar{position:fixed;left:0;right:0;bottom:12px;display:flex;gap:10px;justify-content:center}
+  .btn{padding:10px 14px;border:1px solid var(--line);background:#fff;border-radius:10px;font-weight:700;cursor:pointer}
+
+  /* طباعة */
+  @media print{
+    @page{size:landscape;margin:8mm}
+    body{background:#fff}
+    .toolbar{display:none}
+    .stage{position:relative;inset:auto}
+    .card{box-shadow:none;margin:0 auto}
+  }
+</style>
 </head>
 <body>
-  <div class="min-h-screen grid md:grid-cols-2">
-    <!-- الشعارات يسار -->
-    <div class="hidden md:flex items-center justify-center p-10">
-      <div class="text-center">
-        <img src="assets/FGC.jpeg" class="h-20 mx-auto mb-4 rounded" alt="FGC"/>
-        <img src="assets/TabukCluster.jpeg" class="h-20 mx-auto rounded" alt="Tabuk"/>
+  <div class="stage" id="stage">
+    <div class="card" id="card">
+      <div class="head">
+        <div class="logos">
+          <img class="logo" id="logoCompany" alt="FGC"/>
+          <img class="logo" id="logoCluster" alt="Tabuk"/>
+        </div>
+        <div class="title-ar">الصيانة الوقائية</div>
       </div>
-    </div>
-    <!-- فورم يمين -->
-    <div class="flex items-center justify-center p-6">
-      <div class="card w-full max-w-md p-6">
-        <div class="text-center mb-2 text-xl font-extrabold">Welcome to PPM TABUK</div>
-        <div class="text-center mb-6 text-slate-400">إدارة الصيانة • قسم الأجهزة الطبية</div>
-        <div class="space-y-3">
-          <input id="email" type="email" class="input" placeholder="البريد الإلكتروني"/>
-          <input id="password" type="password" class="input" placeholder="كلمة المرور"/>
-          <button id="btnLogin" class="btn btn-primary w-full">تسجيل الدخول</button>
-        </div>
-        <hr class="my-6 border-slate-700"/>
-        <div class="space-y-3">
-          <input id="r_name" class="input" placeholder="اسم المستخدم الجديد"/>
-          <input id="r_email" type="email" class="input" placeholder="بريد المستخدم الجديد"/>
-          <input id="r_password" type="password" class="input" placeholder="كلمة المرور"/>
-          <select id="r_role" class="input">
-            <option value="tech">Technician</option>
-            <option value="engineer">Engineer</option>
-            <option value="viewer">Viewer</option>
-          </select>
-          <button id="btnRegister" class="btn btn-alt w-full">إضافة مستخدم جديد</button>
-          <div id="msg" class="text-center text-sm text-slate-400 mt-2"></div>
-        </div>
+
+      <div class="body">
+        <div class="k">Control</div>     <div class="v" id="v_control">—</div>
+        <div class="k">Name</div>        <div class="v" id="v_name">—</div>
+        <div class="k">Brand</div>       <div class="v" id="v_brand">—</div>
+        <div class="k">Serial</div>      <div class="v" id="v_serial">—</div>
+        <div class="k">PM Date</div>     <div class="v" id="v_pm">—</div>
+        <div class="k">Next PM</div>     <div class="v" id="v_next">—</div>
+        <div class="k">Technician</div>  <div class="v" id="v_tech">—</div>
+        <div class="k">Site</div>        <div class="v" id="v_site">—</div>
+        <div class="k">Department</div>  <div class="v" id="v_dept">—</div>
       </div>
     </div>
   </div>
 
+  <div class="toolbar">
+    <button class="btn" id="pdfBtn">Download PDF</button>
+  </div>
+
+  <!-- توليد PDF من الكارت -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-    const firebaseConfig = {apiKey:"AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",authDomain:"pmqrtabuk.firebaseapp.com",projectId:"pmqrtabuk",storageBucket:"pmqrtabuk.firebasestorage.app",messagingSenderId:"305570616285",appId:"1:305570616285:web:4f6839fd08b8b5aa131c34"};
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const $ = s=>document.querySelector(s);
-    const msg = m=>{$('#msg').textContent=m;};
+  /* روابط الشعارات داخل الريبو (تقدر تغيّرها لو حاططهم بمكان مختلف) */
+  const COMPANY_LOGO_URL = "assets/FGC.jpeg";
+  const CLUSTER_LOGO_URL = "assets/TabukCluster.jpeg";
 
-    document.getElementById('btnLogin').onclick = async ()=>{
-      try{
-        const email = $('#email').value.trim();
-        const pass  = $('#password').value;
-        await signInWithEmailAndPassword(auth, email, pass);
-        location.href='index.html';
-      }catch(e){ msg('فشل تسجيل الدخول: '+e.message); }
-    };
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+  import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-    document.getElementById('btnRegister').onclick = async ()=>{
-      try{
-        const name = $('#r_name').value.trim();
-        const email= $('#r_email').value.trim();
-        const pass = $('#r_password').value;
-        const role = $('#r_role').value;
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        const uid = cred.user.uid;
-        await setDoc(doc(db,'users', uid), {
-          name, email, role, sites: [], departments: [], createdAt: serverTimestamp()
-        }, { merge:true });
-        msg('تم إنشاء المستخدم وإضافته لقاعدة البيانات ✅');
-      }catch(e){ msg('فشل إنشاء المستخدم: '+e.message); }
-    };
+  const firebaseConfig = {
+    apiKey:"AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
+    authDomain:"pmqrtabuk.firebaseapp.com",
+    projectId:"pmqrtabuk",
+    storageBucket:"pmqrtabuk.firebasestorage.app",
+    messagingSenderId:"305570616285",
+    appId:"1:305570616285:web:4f6839fd08b8b5aa131c34"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  const $ = s=>document.querySelector(s);
+  const safeId = s => (s||"").trim().replace(/[\/#?\s]/g,"-");
+  const fmt = d => d ? new Date(d).toISOString().slice(0,10) : "—";
+
+  function statusOf(pm, next){
+    if(!next) return 'active';
+    const t=new Date(); t.setHours(0,0,0,0);
+    const n=new Date(next); n.setHours(0,0,0,0);
+    const grace=new Date(n); grace.setDate(grace.getDate()+30); // شهر سماح بعد Next PM
+    return (t>grace)?'overdue':'active';
+  }
+
+  async function setImg(el, url){
+    try{
+      await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(); i.onerror=rej; i.src=url; });
+      el.src=url;
+    }catch{ el.style.display='none'; }
+  }
+
+  // ملاءمة أبعاد الكارت مع الشاشة (وتدوير تلقائي)
+  function mmToPx(mm){ return parseFloat(mm)*3.7795; }
+  function layout(){
+    const card=$('#card');
+    const cw=mmToPx(getComputedStyle(card).getPropertyValue('--card-w'));
+    const ch=mmToPx(getComputedStyle(card).getPropertyValue('--card-h'));
+    const vw=innerWidth, vh=innerHeight;
+
+    if(vh>vw){ // Portrait → لفّ
+      const scale=Math.min(vw/ch, vh/cw)*0.98;
+      card.style.transformOrigin='center center';
+      card.style.transform=`rotate(90deg) scale(${scale})`;
+    }else{
+      const scale=Math.min(vw/cw, vh/ch)*0.98;
+      card.style.transformOrigin='center center';
+      card.style.transform=`scale(${scale})`;
+    }
+  }
+
+  async function loadSticker(){
+    // شعارات
+    setImg($('#logoCompany'), COMPANY_LOGO_URL);
+    setImg($('#logoCluster'), CLUSTER_LOGO_URL);
+
+    // رقم الجهاز من الـhash
+    const h = (location.hash||"").split('/')[1];
+    const controlRaw = h ? decodeURIComponent(h) : "";
+    if(!controlRaw) return;
+
+    // جلب البيانات
+    let snap = await getDoc(doc(db,'assets', safeId(controlRaw)));
+    if(!snap.exists()){
+      const qs = await getDocs(query(collection(db,'assets'), where('control','==', controlRaw)));
+      snap = qs.docs[0];
+    }
+    if(!snap||!snap.exists()) return;
+    const d=snap.data();
+
+    // ملء الحقول
+    $('#v_control').textContent = d.control || controlRaw;
+    $('#v_name').textContent    = d.name   || "—";
+    $('#v_brand').textContent   = d.brand  || "—";
+    $('#v_serial').textContent  = d.serial || "—";
+    $('#v_pm').textContent      = fmt(d.pm_date);
+    $('#v_next').textContent    = fmt(d.next_date);
+    $('#v_tech').textContent    = d.tech   || "—";
+    $('#v_site').textContent    = d.site   || "—";
+    $('#v_dept').textContent    = d.department || "—";
+
+    // حالة ساري/منتهي
+    const card=$('#card');
+    card.classList.remove('ok','late');
+    [...card.querySelectorAll('.watermark')].forEach(x=>x.remove());
+    if(statusOf(d.pm_date,d.next_date)==='overdue'){
+      card.classList.add('late');
+      const wm=document.createElement('div'); wm.className='watermark'; wm.textContent='Expired'; card.appendChild(wm);
+    }else{ card.classList.add('ok'); }
+  }
+
+  // PDF
+  document.getElementById('pdfBtn').addEventListener('click', async ()=>{
+    const { jsPDF } = window.jspdf;
+    const node=document.getElementById('card');
+    const prev=node.style.transform;
+    node.style.transform='none';
+    await new Promise(r=>setTimeout(r,50));
+    const canvas=await html2canvas(node,{scale:2,backgroundColor:'#ffffff'});
+    const img=canvas.toDataURL('image/png');
+    const wmm=parseFloat(getComputedStyle(node).getPropertyValue('--card-w'));
+    const hmm=parseFloat(getComputedStyle(node).getPropertyValue('--card-h'));
+    const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:[wmm,hmm]});
+    pdf.addImage(img,'PNG',0,0,wmm,hmm);
+    pdf.save((document.getElementById('v_control').textContent||'sticker')+'.pdf');
+    node.style.transform=prev; layout();
+  });
+
+  window.addEventListener('resize', layout);
+  window.addEventListener('orientationchange', layout);
+  window.addEventListener('load', async()=>{ await loadSticker(); layout(); });
+  window.addEventListener('hashchange', async()=>{ await loadSticker(); layout(); });
   </script>
 </body>
 </html>
