@@ -6,79 +6,66 @@
 <title>PPM Tabuk – Sticker (No QR)</title>
 <style>
   :root{
-    /* المقاس الأصلي للكارت (Landscape) */
     --card-w: 110mm;
     --card-h: 70mm;
-
     --pad: 6mm;
-    --head-h: 14mm;
-
+    --head-h: 16mm;
     --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
     --ok:#16a34a; --late:#ef4444;
     --fs: 11px;
   }
-
   *{box-sizing:border-box}
-  html,body{margin:0;padding:0;height:100%;background:#f3f4f6;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  html,body{margin:0;height:100%;background:#f3f4f6;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
 
-  /* المسرح يملأ الشاشة؛ هنحطّ فيه الكارت ونديره/نكبّره ديناميكياً */
-  .stage{
-    position:fixed; inset:0; overflow:hidden;
-    display:flex; align-items:center; justify-content:center;
-  }
-
-  /* الكارت نفسه بمقاس ثابت (هنعمل له scale/rotate بالـ JS) */
+  .stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
   .card{
     width:var(--card-w); height:var(--card-h);
-    background:#fff; border:2px solid var(--line); border-radius:12px;
+    background:#fff;border:2px solid var(--line);border-radius:12px;
     box-shadow:0 12px 30px rgba(0,0,0,.12);
-    display:grid; grid-template-rows: var(--head-h) 1fr; padding:0 var(--pad) var(--pad);
-    position:relative;
+    display:grid;grid-template-rows:var(--head-h) 1fr;
+    padding:0 var(--pad) var(--pad);
+    position:relative; overflow:hidden;   /* << يمنع خروج أي عنصر خارج الإطار */
   }
-  .card.ok{ border-color:var(--ok) }
-  .card.late{ border-color:var(--late) }
+  .card.ok{border-color:var(--ok)}
+  .card.late{border-color:var(--late)}
 
-  /* الهيدر */
-  .head{ height:var(--head-h); display:flex; align-items:center; justify-content:space-between; gap:8mm }
-  .head .logo{ max-height:11mm; width:auto; object-fit:contain; display:block }
-  .title{ font-weight:800; font-size:14px; white-space:nowrap; margin:0 auto }
+  .head{
+    height:var(--head-h); display:flex; align-items:center; justify-content:space-between;
+    gap:10mm; padding:0 2mm;              /* << مسافة داخلية للهيدر */
+  }
+  .head .logo{
+    max-height:9mm;                       /* << تصغير اللوجو */
+    max-width:34mm; object-fit:contain; display:block
+  }
+  .title{font-weight:800;font-size:14px;white-space:nowrap;margin:0 auto}
 
-  /* جسم الكارت: جدول مرتّب عمودين (Label / Value) */
   .body{
     margin-top:6mm;
-    display:grid; grid-template-columns: 30% 70%;
-    column-gap:6mm; row-gap:3.2mm; font-size:var(--fs); line-height:1.28;
+    display:grid; grid-template-columns:30% 70%;
+    column-gap:6mm; row-gap:3mm; font-size:var(--fs); line-height:1.28;
     text-align:left; direction:ltr;
   }
-  .k{ color:var(--muted); }
-  .v{ font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .k{color:var(--muted)} .v{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  /* علامة منتهي (مائية) */
   .watermark{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     font-size:34px; color:rgba(239,68,68,.18); font-weight:900; transform:rotate(-18deg);
     pointer-events:none; z-index:0;
   }
 
-  /* شريط الأدوات */
-  .toolbar{
-    position:fixed; left:0; right:0; bottom:12px;
-    display:flex; gap:10px; justify-content:center;
-  }
-  .btn{ padding:10px 14px; border:1px solid var(--line); background:#fff; border-radius:10px; font-weight:700; cursor:pointer }
+  .toolbar{position:fixed;left:0;right:0;bottom:12px;display:flex;gap:10px;justify-content:center}
+  .btn{padding:10px 14px;border:1px solid var(--line);background:#fff;border-radius:10px;font-weight:700;cursor:pointer}
 
-  /* الطباعة (لو حبيت من المتصفح) */
   @media print{
-    @page{ size:landscape; margin:8mm }
-    body{ background:#fff }
-    .toolbar{ display:none }
-    .stage{ inset:auto; position:relative; height:auto }
-    .card{ box-shadow:none; margin:0 auto }
+    @page{size:landscape;margin:8mm}
+    body{background:#fff}
+    .toolbar{display:none}
+    .stage{position:relative;inset:auto}
+    .card{box-shadow:none;margin:0 auto}
   }
 </style>
 </head>
 <body>
-  <!-- المسرح: هنقيّس ونلفّ الكارت جواه -->
   <div class="stage" id="stage">
     <div class="card" id="card">
       <div class="head">
@@ -105,17 +92,12 @@
     <button class="btn" id="pdfBtn">Download PDF</button>
   </div>
 
-  <!-- PDF tools -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
-  <!-- Firestore + منطق الصفحة -->
   <script type="module">
-  /* ===== شعارات: حدّد روابطك المباشرة (أو سيب الاحتياطيات) ===== */
-  const COMPANY_LOGO_URL = "https://YOUR-USER.github.io/YOUR-REPO/assets/FGC.jpeg";
-  const CLUSTER_LOGO_URL = "https://YOUR-USER.github.io/YOUR-REPO/assets/TabukCluster.jpeg";
-  const FALLBACK_COMPANY = ["assets/FGC.jpeg","FGC.jpeg"];
-  const FALLBACK_CLUSTER = ["assets/TabukCluster.jpeg","TabukCluster.jpeg"];
+  const COMPANY_LOGO_URL = "assets/FGC.jpeg";
+  const CLUSTER_LOGO_URL = "assets/TabukCluster.jpeg";
 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
   import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
@@ -134,30 +116,43 @@
   const $ = s=>document.querySelector(s);
   const safeId = s => (s||"").trim().replace(/[\/#?\s]/g,"-");
   const fmt = d => d ? new Date(d).toISOString().slice(0,10) : "—";
-  function statusOf(pm_date, next_date){
-    if(!next_date) return "active";
+
+  function statusOf(pm, next){
+    if(!next) return 'active';
     const t=new Date(); t.setHours(0,0,0,0);
-    const n=new Date(next_date); n.setHours(0,0,0,0);
+    const n=new Date(next); n.setHours(0,0,0,0);
     const grace=new Date(n); grace.setDate(grace.getDate()+30);
-    return (t>grace)?"overdue":"active";
-  }
-  async function setImg(img, primary, fallbacks=[]){
-    const list=[primary,...fallbacks.map(p=> new URL(p, location.href).href)];
-    for(const url of list){
-      if(!url) continue;
-      const ok = await new Promise(res=>{
-        const i=new Image(); i.onload=()=>res(true); i.onerror=()=>res(false); i.src=url;
-      });
-      if(ok){ img.src=url; return; }
-    }
-    img.style.display='none';
+    return (t>grace)?'overdue':'active';
   }
 
+  async function setImg(el, url){
+    try{
+      await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(); i.onerror=rej; i.src=url; });
+      el.src=url;
+    }catch{ el.style.display='none'; }
+  }
+
+  function layout(){
+    const card=$('#card');
+    const cw=mmToPx(getComputedStyle(card).getPropertyValue('--card-w'));
+    const ch=mmToPx(getComputedStyle(card).getPropertyValue('--card-h'));
+    const vw=innerWidth, vh=innerHeight;
+
+    if(vh>vw){ // Portrait → لفّ
+      const scale=Math.min(vw/ch, vh/cw)*0.98;
+      card.style.transformOrigin='center center';
+      card.style.transform=`rotate(90deg) scale(${scale})`;
+    }else{
+      const scale=Math.min(vw/cw, vh/ch)*0.98;
+      card.style.transformOrigin='center center';
+      card.style.transform=`scale(${scale})`;
+    }
+  }
+  function mmToPx(mm){ return parseFloat(mm)*3.7795; }
+
   async function loadSticker(){
-    await Promise.all([
-      setImg($('#logoCompany'), COMPANY_LOGO_URL, FALLBACK_COMPANY),
-      setImg($('#logoCluster'), CLUSTER_LOGO_URL, FALLBACK_CLUSTER),
-    ]);
+    setImg($('#logoCompany'), COMPANY_LOGO_URL);
+    setImg($('#logoCluster'), CLUSTER_LOGO_URL);
 
     const controlRaw = (location.hash||"").split('/')[1] ? decodeURIComponent((location.hash||"").split('/')[1]) : "";
     if(!controlRaw) return;
@@ -167,9 +162,8 @@
       const qs = await getDocs(query(collection(db,'assets'), where('control','==', controlRaw)));
       snap = qs.docs[0];
     }
-    if(!snap || !snap.exists()) return;
-
-    const d = snap.data();
+    if(!snap||!snap.exists()) return;
+    const d=snap.data();
 
     $('#v_control').textContent = d.control || controlRaw;
     $('#v_name').textContent    = d.name   || "—";
@@ -181,69 +175,36 @@
     $('#v_site').textContent    = d.site   || "—";
     $('#v_dept').textContent    = d.department || "—";
 
-    // حالة البطاقة
-    const card = $('#card');
+    const card=$('#card');
     card.classList.remove('ok','late');
     [...card.querySelectorAll('.watermark')].forEach(x=>x.remove());
-    if(statusOf(d.pm_date, d.next_date)==='overdue'){
+    if(statusOf(d.pm_date,d.next_date)==='overdue'){
       card.classList.add('late');
       const wm=document.createElement('div'); wm.className='watermark'; wm.textContent='Expired'; card.appendChild(wm);
-    }else{
-      card.classList.add('ok');
-    }
+    }else{ card.classList.add('ok'); }
   }
 
-  // تدوير/تكبير الكارت تلقائيًا حسب اتجاه الشاشة
-  function layout(){
-    const stage = $('#stage');
-    const card  = $('#card');
-    const cw = mmToPx(getComputedStyle(card).getPropertyValue('--card-w'));
-    const ch = mmToPx(getComputedStyle(card).getPropertyValue('--card-h'));
-    const vw = window.innerWidth, vh = window.innerHeight;
-
-    // Portrait → لفّ الكارت 90° وخليه يناسب الشاشة
-    if (vh > vw){
-      const scale = Math.min(vw / ch, vh / cw) * 0.98; // لأننا هنبدّل w,h بعد اللف
-      card.style.transformOrigin = 'center center';
-      card.style.transform = `rotate(90deg) scale(${scale})`;
-    } else {
-      const scale = Math.min(vw / cw, vh / ch) * 0.98;
-      card.style.transformOrigin = 'center center';
-      card.style.transform = `scale(${scale})`;
-    }
-  }
-  function mmToPx(mmString){
-    const mm = parseFloat(mmString);
-    // تحويل تقريبي: 1mm ≈ 3.7795px (96dpi)
-    return mm * 3.7795;
-  }
-  window.addEventListener('resize', layout);
-  window.addEventListener('orientationchange', layout);
-
-  // Download PDF
+  // PDF
   document.getElementById('pdfBtn').addEventListener('click', async ()=>{
     const { jsPDF } = window.jspdf;
-    const node = document.getElementById('card');
-    // نلغي أي transform قبل الالتقاط
-    const prev = node.style.transform;
-    node.style.transform = 'none';
+    const node=document.getElementById('card');
+    const prev=node.style.transform;
+    node.style.transform='none';
     await new Promise(r=>setTimeout(r,50));
-    const canvas = await html2canvas(node, {scale:2, backgroundColor:'#ffffff'});
-    const imgData = canvas.toDataURL('image/png');
-
-    // مقاس الصفحة = مقاس الكارت بالميلي
-    const cardWmm = parseFloat(getComputedStyle(node).getPropertyValue('--card-w'));
-    const cardHmm = parseFloat(getComputedStyle(node).getPropertyValue('--card-h'));
-    const pdf = new jsPDF({orientation:'landscape', unit:'mm', format:[cardWmm, cardHmm]});
-    pdf.addImage(imgData, 'PNG', 0, 0, cardWmm, cardHmm);
-    pdf.save((document.getElementById('v_control').textContent || 'sticker') + '.pdf');
-    // رجّع التحويل
-    node.style.transform = prev;
-    layout();
+    const canvas=await html2canvas(node,{scale:2,backgroundColor:'#ffffff'});
+    const img=canvas.toDataURL('image/png');
+    const wmm=parseFloat(getComputedStyle(node).getPropertyValue('--card-w'));
+    const hmm=parseFloat(getComputedStyle(node).getPropertyValue('--card-h'));
+    const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:[wmm,hmm]});
+    pdf.addImage(img,'PNG',0,0,wmm,hmm);
+    pdf.save((document.getElementById('v_control').textContent||'sticker')+'.pdf');
+    node.style.transform=prev; layout();
   });
 
-  window.addEventListener('load', async ()=>{ await loadSticker(); layout(); });
-  window.addEventListener('hashchange', async ()=>{ await loadSticker(); layout(); });
+  window.addEventListener('resize', layout);
+  window.addEventListener('orientationchange', layout);
+  window.addEventListener('load', async()=>{ await loadSticker(); layout(); });
+  window.addEventListener('hashchange', async()=>{ await loadSticker(); layout(); });
   </script>
 </body>
 </html>
