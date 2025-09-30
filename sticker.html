@@ -3,129 +3,130 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PPM Tabuk – Sticker</title>
-<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<title>Sticker – Landscape</title>
 <style>
-  :root{
-    /* ألوان وخطوط */
-    --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
-    --ok:#16a34a; --late:#ef4444;
-    --fs:10px;           /* حجم النص الرئيسي */
-    /* حجم الكارت الافتراضي (كبرناه) */
-    --card-w:100mm; --card-h:65mm;
-    --head-h:12mm;       /* ارتفاع الهيدر */
-    --qr-size:28mm;      /* حجم QR */
-    --gap-top:5mm;       /* مسافة بعد الهيدر */
-    --gap-side:4mm;      /* حواف داخلية */
+  :root {
+    --line:#d1d5db;
+    --ink:#111827;
+    --muted:#6b7280;
   }
-
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0;background:#f7fafc;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-
-  /* نركّز على الموبايل: الكارت وسط الصفحة وبحجم مناسب */
-  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:12mm 8px}
-  .sticker{
-    width:var(--card-w); height:var(--card-h); max-width:92vw;
-    background:#fff; border:1px solid var(--line); border-radius:10px;
-    box-shadow:0 10px 28px rgba(0,0,0,.10); position:relative;
-    display:grid; grid-template-rows: var(--head-h) 1fr; grid-template-columns:100%;
-    padding:0 var(--gap-side) var(--gap-side) var(--gap-side);
+  body {
+    margin:0;
+    padding:0;
+    background:#f3f4f6;
+    font-family: Arial, sans-serif;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
   }
-
-  /* الهيدر: الشعارين جوّه الإطار دايمًا */
-  .head{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:0 3mm; height:var(--head-h);
+  .sticker {
+    background:#fff;
+    border:2px solid #10b981;
+    border-radius:8px;
+    width:90mm; /* العرض أكبر */
+    height:60mm; /* الطول أصغر */
+    max-width:95vw;
+    box-shadow:0 8px 24px rgba(0,0,0,.15);
+    display:grid;
+    grid-template-rows:15mm 1fr;
+    padding:5mm;
   }
-  .head .logo{
-    max-height: 9mm; width:auto; object-fit:contain; display:block;
+  .head {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
   }
-  .title{
-    margin:0 6px; text-align:center; font-weight:800; font-size:12px; color:#111827; white-space:nowrap
+  .head img {
+    height:12mm;
+    object-fit:contain;
   }
-
-  /* الجسم: عمودين (QR يسار + بيانات يمين) */
-  .body{
-    margin-top:var(--gap-top);
-    display:grid; grid-template-columns: 32mm 1fr; gap:7mm; align-items:start;
+  .title {
+    font-weight:bold;
+    font-size:14px;
+    text-align:center;
+    flex:1;
   }
-
-  /* QR + Control تحت */
-  .qrBox{display:flex; flex-direction:column; align-items:center; gap:6px}
-  .qr{width:var(--qr-size); height:var(--qr-size); border:1px solid var(--line); border-radius:4px}
-  .ctrl{font-weight:800; font-size:11.5px; letter-spacing:.2px}
-
-  /* جدول البيانات يمين (إنجليزي — محاذاة يسار) */
-  .info{
-    display:grid; grid-template-columns: 36% 64%;
-    column-gap:3.5mm; row-gap:2.4mm; font-size:var(--fs); line-height:1.28;
-    text-align:left; direction:ltr; min-height:0;
+  .body {
+    display:grid;
+    grid-template-columns:28mm 1fr; /* QR يسار والبيانات يمين */
+    gap:5mm;
+    align-items:center;
   }
-  .k{color:var(--muted)}
-  .v{color:#111827; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-
-  /* حالة منتهي */
-  .watermark{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-size:28px; color:rgba(239,68,68,.18); font-weight:900; transform:rotate(-18deg);
-    pointer-events:none; z-index:0;
+  .qr {
+    width:28mm;
+    height:28mm;
+    border:1px solid var(--line);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    border-radius:4px;
   }
-  .ok{outline:2px solid var(--ok)} .late{outline:2px solid var(--late)}
-
-  /* أزرار أسفل الصفحة */
-  .toolbar{position:fixed; inset:auto 14px 14px 14px; display:flex; gap:10px; justify-content:center}
-  .btn{padding:10px 14px; border:1px solid var(--line); background:#fff; border-radius:10px; font-weight:700; cursor:pointer}
-
-  /* موبايل أصغر: نخلي QR فوق والبيانات تحت لو المساحة ضاقت */
-  @media (max-width:520px){
-    :root{ --fs:10px; --qr-size:26mm }
-    .wrap{padding:10mm 6px}
-    .body{grid-template-columns: 100%; gap:10px}
-    .qrBox{order:-1}
+  .qr img {
+    width:100%;
+    height:100%;
+    object-fit:contain;
   }
-
-  @media print{
-    body{background:#fff}
-    .toolbar{display:none}
-    .wrap{padding:0}
-    .sticker{box-shadow:none; margin:0 auto}
+  .kv {
+    display:grid;
+    grid-template-columns:35% 65%;
+    row-gap:2mm;
+    font-size:11px;
+  }
+  .k { color:var(--muted); }
+  .v { font-weight:bold; }
+  .footer {
+    font-size:10px;
+    color:var(--muted);
+    margin-top:2mm;
+    text-align:right;
+  }
+  @media print {
+    body { background:#fff; }
+    .sticker { box-shadow:none; margin:0 auto; }
+    .toolbar { display:none; }
+  }
+  .toolbar {
+    position:fixed;
+    bottom:10px;
+    left:0;right:0;
+    display:flex;
+    justify-content:center;
+    gap:10px;
+  }
+  .btn {
+    padding:8px 14px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:#fff;
+    cursor:pointer;
+    font-weight:bold;
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="sticker" id="st">
-    <!-- HEADER -->
-    <div class="head">
-      <img class="logo" id="logoCompany" src="assets/FGC.jpeg" alt="First Gulf Company"/>
-      <div class="title">Preventive Maintenance</div>
-      <img class="logo" id="logoCluster" src="assets/TabukCluster.jpeg" alt="Tabuk Health Cluster"/>
-    </div>
-
-    <!-- BODY -->
-    <div class="body">
-      <!-- Left: QR + Control -->
-      <div class="qrBox">
-        <img id="qr" class="qr" alt="QR"/>
-        <div class="ctrl" id="ctrlText">—</div>
-      </div>
-
-      <!-- Right: details -->
-      <div class="info">
-        <div class="k">Name</div><div class="v" id="v_name">—</div>
-        <div class="k">Brand</div><div class="v" id="v_brand">—</div>
-        <div class="k">Serial</div><div class="v" id="v_serial">—</div>
-        <div class="k">PM Date</div><div class="v" id="v_pm">—</div>
-        <div class="k">Next PM</div><div class="v" id="v_next">—</div>
-        <div class="k">Technician</div><div class="v" id="v_tech">—</div>
-        <div class="k">Site</div><div class="v" id="v_site">—</div>
-        <div class="k">Department</div><div class="v" id="v_dept">—</div>
-      </div>
+<div class="sticker" id="sticker">
+  <div class="head">
+    <img src="FGC.jpeg" alt="FGC"/>
+    <div class="title">Preventive Maintenance</div>
+    <img src="TabukCluster.jpeg" alt="Tabuk"/>
+  </div>
+  <div class="body">
+    <div class="qr"><img id="qr" alt="QR"/></div>
+    <div class="kv">
+      <div class="k">Control</div><div class="v" id="v_control">—</div>
+      <div class="k">Name</div><div class="v" id="v_name">—</div>
+      <div class="k">Brand</div><div class="v" id="v_brand">—</div>
+      <div class="k">Serial</div><div class="v" id="v_serial">—</div>
+      <div class="k">PM Date</div><div class="v" id="v_pm">—</div>
+      <div class="k">Next PM</div><div class="v" id="v_next">—</div>
+      <div class="k">Technician</div><div class="v" id="v_tech">—</div>
+      <div class="k">Site</div><div class="v" id="v_site">—</div>
+      <div class="k">Department</div><div class="v" id="v_dept">—</div>
     </div>
   </div>
 </div>
 
-<!-- Actions -->
 <div class="toolbar">
   <button class="btn" onclick="window.print()">Print</button>
   <button class="btn" id="copyBtn">Copy scan link</button>
@@ -136,89 +137,57 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-/* Firebase */
 const firebaseConfig = {
-  apiKey:"AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
-  authDomain:"pmqrtabuk.firebaseapp.com",
-  projectId:"pmqrtabuk",
-  storageBucket:"pmqrtabuk.firebasestorage.app",
-  messagingSenderId:"305570616285",
-  appId:"1:305570616285:web:4f6839fd08b8b5aa131c34"
+  apiKey: "AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
+  authDomain: "pmqrtabuk.firebaseapp.com",
+  projectId: "pmqrtabuk",
+  storageBucket: "pmqrtabuk.firebasestorage.app",
+  messagingSenderId: "305570616285",
+  appId: "1:305570616285:web:4f6839fd08b8b5aa131c34"
 };
 const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const db = getFirestore(app);
 
-/* Helpers */
-const $ = s=>document.querySelector(s);
-const safeId = s => (s||'').trim().replace(/[\/#?\s]/g,'-');
+const $ = s => document.querySelector(s);
 const fmt = d => d ? new Date(d).toISOString().slice(0,10) : '—';
-function stickerLink(control){ const base = location.origin + location.pathname; return `${base}#view/${encodeURIComponent(control)}`; }
-function statusOf(pm_date, next_date){
-  if(!next_date) return 'active';
-  const today = new Date(); today.setHours(0,0,0,0);
-  const n  = new Date(next_date); n.setHours(0,0,0,0);
-  const grace = new Date(n); grace.setDate(grace.getDate()+30); // سماح شهر
-  return (today>grace)?'overdue':'active';
+const safeId = s => (s||'').trim().replace(/[\/#?\s]/g,'-');
+function currentLink(control){
+  const base = location.origin + location.pathname;
+  return `${base}#view/${encodeURIComponent(control)}`;
 }
 
-/* Load */
 async function loadSticker(){
   const parts = (location.hash||'').split('/');
   const controlRaw = parts[1] ? decodeURIComponent(parts[1]) : '';
-  if(!controlRaw) return;
-
+  if(!controlRaw){ return; }
   let snap = await getDoc(doc(db,'assets', safeId(controlRaw)));
   if(!snap.exists()){
     const qs = await getDocs(query(collection(db,'assets'), where('control','==', controlRaw)));
     snap = qs.docs[0];
   }
-  if(!snap || !snap.exists()) return;
-
+  if(!snap || !snap.exists()){ return; }
   const d = snap.data();
+  $('#v_control').textContent = d.control||'—';
+  $('#v_name').textContent = d.name||'—';
+  $('#v_brand').textContent = d.brand||'—';
+  $('#v_serial').textContent = d.serial||'—';
+  $('#v_pm').textContent = fmt(d.pm_date);
+  $('#v_next').textContent = fmt(d.next_date);
+  $('#v_tech').textContent = d.tech||'—';
+  $('#v_site').textContent = d.site||'—';
+  $('#v_dept').textContent = d.department||'—';
 
-  // Fill values
-  const control = d.control || controlRaw;
-  $('#ctrlText').textContent = control;
-  $('#v_name').textContent   = d.name   || '—';
-  $('#v_brand').textContent  = d.brand  || '—';
-  $('#v_serial').textContent = d.serial || '—';
-  $('#v_pm').textContent     = fmt(d.pm_date);
-  $('#v_next').textContent   = fmt(d.next_date);
-  $('#v_tech').textContent   = d.tech   || '—';
-  $('#v_site').textContent   = d.site   || '—';
-  $('#v_dept').textContent   = d.department || '—';
+  const link = currentLink(d.control||controlRaw);
+  QRCode.toDataURL(link, {width:220, margin:1})
+    .then(url=> $('#qr').src = url)
+    .catch(()=> $('#qr').src = "https://chart.googleapis.com/chart?cht=qr&chs=220x220&chl="+encodeURIComponent(link));
 
-  // QR for link to this sticker
-  const link = stickerLink(control);
-  QRCode.toDataURL(link, {width: 360, margin: 0})
-    .then(url => { $('#qr').src = url; })
-    .catch(()=>{ $('#qr').src = 'https://chart.googleapis.com/chart?cht=qr&chs=360x360&chl='+encodeURIComponent(link); });
-
-  // Status frame + watermark
-  const box = document.getElementById('st');
-  box.classList.remove('ok','late');
-  [...box.querySelectorAll('.watermark')].forEach(el=>el.remove());
-  const st = statusOf(d.pm_date, d.next_date);
-  if(st==='overdue'){
-    box.classList.add('late');
-    const wm = document.createElement('div'); wm.className='watermark'; wm.textContent='Expired';
-    box.appendChild(wm);
-  }else{
-    box.classList.add('ok');
-  }
-
-  // Copy link button
-  document.getElementById('copyBtn').onclick = async ()=>{
-    try{
-      await navigator.clipboard.writeText(link);
-      const b = document.getElementById('copyBtn');
-      b.textContent='Copied ✅'; setTimeout(()=>b.textContent='Copy scan link',1200);
-    }catch{}
+  $('#copyBtn').onclick = async ()=>{
+    try{ await navigator.clipboard.writeText(link); $('#copyBtn').textContent='Copied ✅'; setTimeout(()=>$('#copyBtn').textContent='Copy scan link',1200);}catch{}
   };
 }
-
-window.addEventListener('hashchange', loadSticker);
 window.addEventListener('load', loadSticker);
+window.addEventListener('hashchange', loadSticker);
 </script>
 </body>
 </html>
