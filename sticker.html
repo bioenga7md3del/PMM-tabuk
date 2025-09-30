@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PPM Tabuk – Sticker (No QR)</title>
+<title>PPM Tabuk – Sticker</title>
 <style>
   :root{
-    --card-w: 110mm;
-    --card-h: 70mm;
+    --card-w: 110mm;   /* عرض الكارت */
+    --card-h: 70mm;    /* ارتفاع الكارت */
     --pad: 6mm;
-    --head-h: 16mm;
+    --head-h: 22mm;    /* الهيدر بقى أعلى (شعارات + عنوان عربي) */
     --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
     --ok:#16a34a; --late:#ef4444;
     --fs: 11px;
@@ -24,29 +24,28 @@
     box-shadow:0 12px 30px rgba(0,0,0,.12);
     display:grid;grid-template-rows:var(--head-h) 1fr;
     padding:0 var(--pad) var(--pad);
-    position:relative; overflow:hidden;   /* << يمنع خروج أي عنصر خارج الإطار */
+    position:relative; overflow:hidden;   /* يمنع خروج أي عنصر خارج الإطار */
   }
   .card.ok{border-color:var(--ok)}
   .card.late{border-color:var(--late)}
 
-  .head{
-    height:var(--head-h); display:flex; align-items:center; justify-content:space-between;
-    gap:10mm; padding:0 2mm;              /* << مسافة داخلية للهيدر */
-  }
-  .head .logo{
-    max-height:9mm;                       /* << تصغير اللوجو */
-    max-width:34mm; object-fit:contain; display:block
-  }
-  .title{font-weight:800;font-size:14px;white-space:nowrap;margin:0 auto}
+  /* الهيدر: صف شعارات + عنوان عربي أسفله */
+  .head{display:grid;grid-template-rows:1fr auto;gap:3mm;padding-top:3mm}
+  .logos{display:flex;align-items:center;justify-content:space-between;gap:10mm;padding:0 2mm}
+  .logo{max-height:9mm;max-width:36mm;object-fit:contain;display:block}
+  .title-ar{font-weight:900;font-size:14px;text-align:center;letter-spacing:.2px}
 
+  /* جسم البيانات */
   .body{
-    margin-top:6mm;
+    margin-top:4mm;
     display:grid; grid-template-columns:30% 70%;
     column-gap:6mm; row-gap:3mm; font-size:var(--fs); line-height:1.28;
-    text-align:left; direction:ltr;
+    text-align:left; direction:ltr;      /* إنجليزي من الشمال */
   }
-  .k{color:var(--muted)} .v{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .k{color:var(--muted)}
+  .v{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+  /* وسم “منتهي” */
   .watermark{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     font-size:34px; color:rgba(239,68,68,.18); font-weight:900; transform:rotate(-18deg);
@@ -56,6 +55,7 @@
   .toolbar{position:fixed;left:0;right:0;bottom:12px;display:flex;gap:10px;justify-content:center}
   .btn{padding:10px 14px;border:1px solid var(--line);background:#fff;border-radius:10px;font-weight:700;cursor:pointer}
 
+  /* طباعة */
   @media print{
     @page{size:landscape;margin:8mm}
     body{background:#fff}
@@ -69,9 +69,11 @@
   <div class="stage" id="stage">
     <div class="card" id="card">
       <div class="head">
-        <img class="logo" id="logoCompany" alt="FGC"/>
-        <div class="title">Preventive Maintenance</div>
-        <img class="logo" id="logoCluster" alt="Tabuk"/>
+        <div class="logos">
+          <img class="logo" id="logoCompany" alt="FGC"/>
+          <img class="logo" id="logoCluster" alt="Tabuk"/>
+        </div>
+        <div class="title-ar">الصيانة الوقائية</div>
       </div>
 
       <div class="body">
@@ -92,10 +94,12 @@
     <button class="btn" id="pdfBtn">Download PDF</button>
   </div>
 
+  <!-- توليد PDF من الكارت -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
   <script type="module">
+  /* روابط الشعارات داخل الريبو (تقدر تغيّرها لو حاططهم بمكان مختلف) */
   const COMPANY_LOGO_URL = "assets/FGC.jpeg";
   const CLUSTER_LOGO_URL = "assets/TabukCluster.jpeg";
 
@@ -121,7 +125,7 @@
     if(!next) return 'active';
     const t=new Date(); t.setHours(0,0,0,0);
     const n=new Date(next); n.setHours(0,0,0,0);
-    const grace=new Date(n); grace.setDate(grace.getDate()+30);
+    const grace=new Date(n); grace.setDate(grace.getDate()+30); // شهر سماح بعد Next PM
     return (t>grace)?'overdue':'active';
   }
 
@@ -132,6 +136,8 @@
     }catch{ el.style.display='none'; }
   }
 
+  // ملاءمة أبعاد الكارت مع الشاشة (وتدوير تلقائي)
+  function mmToPx(mm){ return parseFloat(mm)*3.7795; }
   function layout(){
     const card=$('#card');
     const cw=mmToPx(getComputedStyle(card).getPropertyValue('--card-w'));
@@ -148,15 +154,18 @@
       card.style.transform=`scale(${scale})`;
     }
   }
-  function mmToPx(mm){ return parseFloat(mm)*3.7795; }
 
   async function loadSticker(){
+    // شعارات
     setImg($('#logoCompany'), COMPANY_LOGO_URL);
     setImg($('#logoCluster'), CLUSTER_LOGO_URL);
 
-    const controlRaw = (location.hash||"").split('/')[1] ? decodeURIComponent((location.hash||"").split('/')[1]) : "";
+    // رقم الجهاز من الـhash
+    const h = (location.hash||"").split('/')[1];
+    const controlRaw = h ? decodeURIComponent(h) : "";
     if(!controlRaw) return;
 
+    // جلب البيانات
     let snap = await getDoc(doc(db,'assets', safeId(controlRaw)));
     if(!snap.exists()){
       const qs = await getDocs(query(collection(db,'assets'), where('control','==', controlRaw)));
@@ -165,6 +174,7 @@
     if(!snap||!snap.exists()) return;
     const d=snap.data();
 
+    // ملء الحقول
     $('#v_control').textContent = d.control || controlRaw;
     $('#v_name').textContent    = d.name   || "—";
     $('#v_brand').textContent   = d.brand  || "—";
@@ -175,6 +185,7 @@
     $('#v_site').textContent    = d.site   || "—";
     $('#v_dept').textContent    = d.department || "—";
 
+    // حالة ساري/منتهي
     const card=$('#card');
     card.classList.remove('ok','late');
     [...card.querySelectorAll('.watermark')].forEach(x=>x.remove());
