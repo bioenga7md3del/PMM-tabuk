@@ -7,53 +7,58 @@
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <style>
   :root{
-    /* ألوان وخط */
+    /* ألوان وخطوط */
     --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
     --ok:#16a34a; --late:#ef4444;
-    --fs:9.2px; /* حجم الخط */
-    /* أحجام افتراضية (CR80) */
-    --card-w:85.6mm; --card-h:54mm;
-    --head-h:11mm;     /* ارتفاع الهيدر */
-    --qr-size:24mm;    /* حجم QR */
-    --gap-top:4mm;     /* مسافة بعد الهيدر */
-    --gap-side:4mm;    /* حواف داخلية */
+    --fs:10px;           /* حجم النص الرئيسي */
+    /* حجم الكارت الافتراضي (كبرناه) */
+    --card-w:100mm; --card-h:65mm;
+    --head-h:12mm;       /* ارتفاع الهيدر */
+    --qr-size:28mm;      /* حجم QR */
+    --gap-top:5mm;       /* مسافة بعد الهيدر */
+    --gap-side:4mm;      /* حواف داخلية */
   }
 
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:#f7fafc;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
 
-  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:10mm 8px}
+  /* نركّز على الموبايل: الكارت وسط الصفحة وبحجم مناسب */
+  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:12mm 8px}
   .sticker{
-    width:var(--card-w); height:var(--card-h); max-width:100%;
-    background:#fff; border:1px solid var(--line); border-radius:6px;
-    box-shadow:0 8px 24px rgba(0,0,0,.08); position:relative;
+    width:var(--card-w); height:var(--card-h); max-width:92vw;
+    background:#fff; border:1px solid var(--line); border-radius:10px;
+    box-shadow:0 10px 28px rgba(0,0,0,.10); position:relative;
     display:grid; grid-template-rows: var(--head-h) 1fr; grid-template-columns:100%;
     padding:0 var(--gap-side) var(--gap-side) var(--gap-side);
   }
 
-  /* Header */
+  /* الهيدر: الشعارين جوّه الإطار دايمًا */
   .head{
-    display:grid; grid-template-columns: auto 1fr auto; align-items:center; gap:6px;
-    padding:4px 0;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 3mm; height:var(--head-h);
   }
-  .logo{height:8.5mm; object-fit:contain}
-  .title{text-align:center; font-weight:800; font-size:11px; color:#111827; white-space:nowrap}
+  .head .logo{
+    max-height: 9mm; width:auto; object-fit:contain; display:block;
+  }
+  .title{
+    margin:0 6px; text-align:center; font-weight:800; font-size:12px; color:#111827; white-space:nowrap
+  }
 
-  /* Body: عمودين */
+  /* الجسم: عمودين (QR يسار + بيانات يمين) */
   .body{
     margin-top:var(--gap-top);
-    display:grid; grid-template-columns: 28mm 1fr; gap:6mm; align-items:start;
+    display:grid; grid-template-columns: 32mm 1fr; gap:7mm; align-items:start;
   }
 
   /* QR + Control تحت */
   .qrBox{display:flex; flex-direction:column; align-items:center; gap:6px}
-  .qr{width:var(--qr-size); height:var(--qr-size); border:1px solid var(--line); border-radius:3px}
-  .ctrl{font-weight:800; font-size:10.5px; letter-spacing:0.2px}
+  .qr{width:var(--qr-size); height:var(--qr-size); border:1px solid var(--line); border-radius:4px}
+  .ctrl{font-weight:800; font-size:11.5px; letter-spacing:.2px}
 
-  /* جدول البيانات يمين */
+  /* جدول البيانات يمين (إنجليزي — محاذاة يسار) */
   .info{
     display:grid; grid-template-columns: 36% 64%;
-    column-gap:3mm; row-gap:2mm; font-size:var(--fs); line-height:1.25;
+    column-gap:3.5mm; row-gap:2.4mm; font-size:var(--fs); line-height:1.28;
     text-align:left; direction:ltr; min-height:0;
   }
   .k{color:var(--muted)}
@@ -62,21 +67,23 @@
   /* حالة منتهي */
   .watermark{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-size:26px; color:rgba(239,68,68,.18); font-weight:900; transform:rotate(-18deg);
+    font-size:28px; color:rgba(239,68,68,.18); font-weight:900; transform:rotate(-18deg);
     pointer-events:none; z-index:0;
   }
   .ok{outline:2px solid var(--ok)} .late{outline:2px solid var(--late)}
 
   /* أزرار أسفل الصفحة */
-  .toolbar{position:fixed; inset:auto 12px 12px 12px; display:flex; gap:10px; justify-content:center}
+  .toolbar{position:fixed; inset:auto 14px 14px 14px; display:flex; gap:10px; justify-content:center}
   .btn{padding:10px 14px; border:1px solid var(--line); background:#fff; border-radius:10px; font-weight:700; cursor:pointer}
 
+  /* موبايل أصغر: نخلي QR فوق والبيانات تحت لو المساحة ضاقت */
   @media (max-width:520px){
-    :root{ --fs:9px; --qr-size:22mm }
-    .wrap{padding:8mm 6px}
+    :root{ --fs:10px; --qr-size:26mm }
+    .wrap{padding:10mm 6px}
     .body{grid-template-columns: 100%; gap:10px}
     .qrBox{order:-1}
   }
+
   @media print{
     body{background:#fff}
     .toolbar{display:none}
@@ -154,18 +161,6 @@ function statusOf(pm_date, next_date){
   return (today>grace)?'overdue':'active';
 }
 
-/* Size via URL: ?size=cr80 | large */
-(function applySizeFromURL(){
-  const p = new URLSearchParams(location.search).get('size');
-  if(p==='large'){
-    document.documentElement.style.setProperty('--card-w','100mm');
-    document.documentElement.style.setProperty('--card-h','65mm');
-    document.documentElement.style.setProperty('--qr-size','28mm');
-    document.documentElement.style.setProperty('--head-h','12mm');
-    document.documentElement.style.setProperty('--fs','10px');
-  }
-})();
-
 /* Load */
 async function loadSticker(){
   const parts = (location.hash||'').split('/');
@@ -195,11 +190,11 @@ async function loadSticker(){
 
   // QR for link to this sticker
   const link = stickerLink(control);
-  QRCode.toDataURL(link, {width: 340, margin: 0})
+  QRCode.toDataURL(link, {width: 360, margin: 0})
     .then(url => { $('#qr').src = url; })
-    .catch(()=>{ $('#qr').src = 'https://chart.googleapis.com/chart?cht=qr&chs=340x340&chl='+encodeURIComponent(link); });
+    .catch(()=>{ $('#qr').src = 'https://chart.googleapis.com/chart?cht=qr&chs=360x360&chl='+encodeURIComponent(link); });
 
-  // Status
+  // Status frame + watermark
   const box = document.getElementById('st');
   box.classList.remove('ok','late');
   [...box.querySelectorAll('.watermark')].forEach(el=>el.remove());
@@ -212,7 +207,7 @@ async function loadSticker(){
     box.classList.add('ok');
   }
 
-  // Copy link
+  // Copy link button
   document.getElementById('copyBtn').onclick = async ()=>{
     try{
       await navigator.clipboard.writeText(link);
