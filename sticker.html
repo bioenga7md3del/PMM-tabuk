@@ -3,126 +3,97 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Sticker – Landscape</title>
+<title>PPM Tabuk – Sticker</title>
 <style>
-  :root {
-    --line:#d1d5db;
-    --ink:#111827;
-    --muted:#6b7280;
+  :root{
+    /* ضبط المقاس (عرضي) */
+    --card-w: 100mm;
+    --card-h: 66mm;
+    --head-h: 13mm;
+    --qr: 30mm;
+    --pad-x: 5mm;
+    --gap: 6mm;
+
+    --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
+    --ok:#16a34a; --late:#ef4444;
+    --fs: 10.5px;
   }
-  body {
-    margin:0;
-    padding:0;
-    background:#f3f4f6;
-    font-family: Arial, sans-serif;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#f3f4f6;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:10mm 8px}
+  .card{
+    width:var(--card-w);height:var(--card-h);max-width:96vw;background:#fff;
+    border:2px solid var(--line);border-radius:10px;box-shadow:0 10px 26px rgba(0,0,0,.08);
+    display:grid;grid-template-rows:var(--head-h) 1fr;padding:0 var(--pad-x) var(--pad-x);position:relative
   }
-  .sticker {
-    background:#fff;
-    border:2px solid #10b981;
-    border-radius:8px;
-    width:90mm; /* العرض أكبر */
-    height:60mm; /* الطول أصغر */
-    max-width:95vw;
-    box-shadow:0 8px 24px rgba(0,0,0,.15);
-    display:grid;
-    grid-template-rows:15mm 1fr;
-    padding:5mm;
+  .card.ok{border-color:var(--ok)} .card.late{border-color:var(--late)}
+  .head{height:var(--head-h);display:flex;align-items:center;justify-content:space-between;padding:0 3mm}
+  .head .logo{max-height:10mm;width:auto;object-fit:contain;display:block}
+  .title{font-weight:800;font-size:13px;margin:0 8px;white-space:nowrap;text-align:center;flex:1}
+  .body{margin-top:5mm;display:grid;grid-template-columns:33mm 1fr;gap:var(--gap);align-items:start}
+  .qrBox{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .qr{width:var(--qr);height:var(--qr);border:1px solid var(--line);border-radius:4px}
+  .ctrl{font-weight:800;font-size:12px;letter-spacing:.2px}
+  .info{display:grid;grid-template-columns:36% 64%;column-gap:4mm;row-gap:2.6mm;font-size:var(--fs);line-height:1.25;text-align:left}
+  .k{color:var(--muted)} .v{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:30px;color:rgba(239,68,68,.18);font-weight:900;transform:rotate(-18deg);pointer-events:none}
+
+  .toolbar{position:fixed;inset:auto 14px 14px 14px;display:flex;gap:10px;justify-content:center}
+  .btn{padding:10px 14px;border:1px solid var(--line);background:#fff;border-radius:10px;font-weight:700;cursor:pointer}
+
+  /* موبايل: يظل شكل أفقي بس يسمح بالتضييق */
+  @media (max-width:520px){
+    :root{--qr:28mm;--fs:10px}
+    .wrap{padding:8mm 6px}
+    .card{width:min(720px,96vw)}
+    .body{grid-template-columns:31mm 1fr;gap:5.5mm}
   }
-  .head {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
+
+  /* الطباعة بالعرض */
+  @media print{
+    @page{size:landscape;margin:8mm}
+    body{background:#fff}
+    .toolbar{display:none}
+    .wrap{padding:0}
+    .card{box-shadow:none;margin:0 auto}
   }
-  .head img {
-    height:12mm;
-    object-fit:contain;
+
+  /* تلميح تدوير الشاشة */
+  #orientHint{
+    position:fixed;inset:0;background:rgba(0,0,0,.6);color:#fff;display:none;
+    align-items:center;justify-content:center;text-align:center;padding:20px;z-index:9999
   }
-  .title {
-    font-weight:bold;
-    font-size:14px;
-    text-align:center;
-    flex:1;
-  }
-  .body {
-    display:grid;
-    grid-template-columns:28mm 1fr; /* QR يسار والبيانات يمين */
-    gap:5mm;
-    align-items:center;
-  }
-  .qr {
-    width:28mm;
-    height:28mm;
-    border:1px solid var(--line);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    border-radius:4px;
-  }
-  .qr img {
-    width:100%;
-    height:100%;
-    object-fit:contain;
-  }
-  .kv {
-    display:grid;
-    grid-template-columns:35% 65%;
-    row-gap:2mm;
-    font-size:11px;
-  }
-  .k { color:var(--muted); }
-  .v { font-weight:bold; }
-  .footer {
-    font-size:10px;
-    color:var(--muted);
-    margin-top:2mm;
-    text-align:right;
-  }
-  @media print {
-    body { background:#fff; }
-    .sticker { box-shadow:none; margin:0 auto; }
-    .toolbar { display:none; }
-  }
-  .toolbar {
-    position:fixed;
-    bottom:10px;
-    left:0;right:0;
-    display:flex;
-    justify-content:center;
-    gap:10px;
-  }
-  .btn {
-    padding:8px 14px;
-    border:1px solid var(--line);
-    border-radius:6px;
-    background:#fff;
-    cursor:pointer;
-    font-weight:bold;
-  }
+  #orientHint div{max-width:420px}
 </style>
 </head>
 <body>
-<div class="sticker" id="sticker">
-  <div class="head">
-    <img src="Asset/FGC.jpeg" alt="FGC"/>
-    <div class="title">Preventive Maintenance</div>
-    <img src="Asset/TabukCluster.jpeg" alt="Tabuk"/>
-  </div>
-  <div class="body">
-    <div class="qr"><img id="qr" alt="QR"/></div>
-    <div class="kv">
-      <div class="k">Control</div><div class="v" id="v_control">—</div>
-      <div class="k">Name</div><div class="v" id="v_name">—</div>
-      <div class="k">Brand</div><div class="v" id="v_brand">—</div>
-      <div class="k">Serial</div><div class="v" id="v_serial">—</div>
-      <div class="k">PM Date</div><div class="v" id="v_pm">—</div>
-      <div class="k">Next PM</div><div class="v" id="v_next">—</div>
-      <div class="k">Technician</div><div class="v" id="v_tech">—</div>
-      <div class="k">Site</div><div class="v" id="v_site">—</div>
-      <div class="k">Department</div><div class="v" id="v_dept">—</div>
+<div id="orientHint"><div>
+  <h3 style="margin:0 0 8px">Rotate your phone</h3>
+  <p style="margin:0">For best view, rotate your phone to landscape (sideways).</p>
+</div></div>
+
+<div class="wrap">
+  <div class="card" id="card">
+    <div class="head">
+      <img class="logo" id="logoCompany" alt="FGC"/>
+      <div class="title">Preventive Maintenance</div>
+      <img class="logo" id="logoCluster" alt="Tabuk"/>
+    </div>
+    <div class="body">
+      <div class="qrBox">
+        <img id="qr" class="qr" alt="QR">
+        <div class="ctrl" id="ctrlText">—</div>
+      </div>
+      <div class="info">
+        <div class="k">Name</div>       <div class="v" id="v_name">—</div>
+        <div class="k">Brand</div>      <div class="v" id="v_brand">—</div>
+        <div class="k">Serial</div>     <div class="v" id="v_serial">—</div>
+        <div class="k">PM Date</div>    <div class="v" id="v_pm">—</div>
+        <div class="k">Next PM</div>    <div class="v" id="v_next">—</div>
+        <div class="k">Technician</div> <div class="v" id="v_tech">—</div>
+        <div class="k">Site</div>       <div class="v" id="v_site">—</div>
+        <div class="k">Department</div> <div class="v" id="v_dept">—</div>
+      </div>
     </div>
   </div>
 </div>
@@ -134,59 +105,124 @@
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script type="module">
+/* ================= Logos: حط روابطك المباشرة هنا ================= */
+const COMPANY_LOGO_URL  = "https://YOUR-USER.github.io/YOUR-REPO/assets/FGC.jpeg";
+const CLUSTER_LOGO_URL  = "https://YOUR-USER.github.io/YOUR-REPO/assets/TabukCluster.jpeg";
+/* مسارات احتياطية لو اللينكات فوق مش متاحة */
+const FALLBACK_COMPANY  = ["assets/FGC.jpeg","FGC.jpeg"];
+const FALLBACK_CLUSTER  = ["assets/TabukCluster.jpeg","TabukCluster.jpeg"];
+
+/* ================= Firebase ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
-  authDomain: "pmqrtabuk.firebaseapp.com",
-  projectId: "pmqrtabuk",
-  storageBucket: "pmqrtabuk.firebasestorage.app",
-  messagingSenderId: "305570616285",
-  appId: "1:305570616285:web:4f6839fd08b8b5aa131c34"
+  apiKey:"AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
+  authDomain:"pmqrtabuk.firebaseapp.com",
+  projectId:"pmqrtabuk",
+  storageBucket:"pmqrtabuk.firebasestorage.app",
+  messagingSenderId:"305570616285",
+  appId:"1:305570616285:web:4f6839fd08b8b5aa131c34"
 };
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db  = getFirestore(app);
 
-const $ = s => document.querySelector(s);
-const fmt = d => d ? new Date(d).toISOString().slice(0,10) : '—';
-const safeId = s => (s||'').trim().replace(/[\/#?\s]/g,'-');
-function currentLink(control){
-  const base = location.origin + location.pathname;
-  return `${base}#view/${encodeURIComponent(control)}`;
+/* ================= Helpers ================= */
+const $ = s=>document.querySelector(s);
+const safeId = s => (s||"").trim().replace(/[\/#?\s]/g,"-");
+const fmt = d => d ? new Date(d).toISOString().slice(0,10) : "—";
+function stickerLink(control){ const base = location.origin + location.pathname; return `${base}#view/${encodeURIComponent(control)}`; }
+function statusOf(pm_date, next_date){
+  if(!next_date) return "active";
+  const t=new Date(); t.setHours(0,0,0,0);
+  const n=new Date(next_date); n.setHours(0,0,0,0);
+  const grace=new Date(n); grace.setDate(grace.getDate()+30);
+  return (t>grace)?"overdue":"active";
+}
+async function setImg(img, primary, fallbacks=[]){
+  const list=[primary,...fallbacks.map(p=> new URL(p, location.href).href)];
+  for(const url of list){
+    if(!url) continue;
+    const ok = await new Promise(res=>{
+      const i=new Image();
+      i.onload = ()=>res(true);
+      i.onerror= ()=>res(false);
+      i.src=url;
+    });
+    if(ok){ img.src=url; return; }
+  }
+  img.style.display="none";
 }
 
+/* ================= Load ================= */
 async function loadSticker(){
-  const parts = (location.hash||'').split('/');
-  const controlRaw = parts[1] ? decodeURIComponent(parts[1]) : '';
-  if(!controlRaw){ return; }
+  // شعارات
+  await Promise.all([
+    setImg($('#logoCompany'), COMPANY_LOGO_URL, FALLBACK_COMPANY),
+    setImg($('#logoCluster'), CLUSTER_LOGO_URL, FALLBACK_CLUSTER),
+  ]);
+
+  const hash = (location.hash||"").split("/");
+  const controlRaw = hash[1] ? decodeURIComponent(hash[1]) : "";
+  if(!controlRaw) return;
+
+  // جِيب الدوك من Firestore
   let snap = await getDoc(doc(db,'assets', safeId(controlRaw)));
   if(!snap.exists()){
     const qs = await getDocs(query(collection(db,'assets'), where('control','==', controlRaw)));
     snap = qs.docs[0];
   }
-  if(!snap || !snap.exists()){ return; }
+  if(!snap || !snap.exists()) return;
   const d = snap.data();
-  $('#v_control').textContent = d.control||'—';
-  $('#v_name').textContent = d.name||'—';
-  $('#v_brand').textContent = d.brand||'—';
-  $('#v_serial').textContent = d.serial||'—';
-  $('#v_pm').textContent = fmt(d.pm_date);
-  $('#v_next').textContent = fmt(d.next_date);
-  $('#v_tech').textContent = d.tech||'—';
-  $('#v_site').textContent = d.site||'—';
-  $('#v_dept').textContent = d.department||'—';
+  const control = d.control || controlRaw;
 
-  const link = currentLink(d.control||controlRaw);
-  QRCode.toDataURL(link, {width:220, margin:1})
-    .then(url=> $('#qr').src = url)
-    .catch(()=> $('#qr').src = "https://chart.googleapis.com/chart?cht=qr&chs=220x220&chl="+encodeURIComponent(link));
+  // عبّي البيانات
+  $('#ctrlText').textContent = control;
+  $('#v_name').textContent   = d.name   || "—";
+  $('#v_brand').textContent  = d.brand  || "—";
+  $('#v_serial').textContent = d.serial || "—";
+  $('#v_pm').textContent     = fmt(d.pm_date);
+  $('#v_next').textContent   = fmt(d.next_date);
+  $('#v_tech').textContent   = d.tech   || "—";
+  $('#v_site').textContent   = d.site   || "—";
+  $('#v_dept').textContent   = d.department || "—";
 
+  // QR → رابط الاستيكر نفسه
+  const link = stickerLink(control);
+  QRCode.toDataURL(link, {width: 360, margin: 0})
+    .then(url => $('#qr').src = url)
+    .catch(()=> $('#qr').src = "https://chart.googleapis.com/chart?cht=qr&chs=360x360&chl="+encodeURIComponent(link));
+
+  // حالة بطاقة
+  const card = $('#card');
+  card.classList.remove('ok','late');
+  [...card.querySelectorAll('.watermark')].forEach(x=>x.remove());
+  if(statusOf(d.pm_date, d.next_date)==='overdue'){
+    card.classList.add('late');
+    const wm=document.createElement('div'); wm.className='watermark'; wm.textContent='Expired'; card.appendChild(wm);
+  }else{
+    card.classList.add('ok');
+  }
+
+  // نسخ الرابط
   $('#copyBtn').onclick = async ()=>{
-    try{ await navigator.clipboard.writeText(link); $('#copyBtn').textContent='Copied ✅'; setTimeout(()=>$('#copyBtn').textContent='Copy scan link',1200);}catch{}
+    try{
+      await navigator.clipboard.writeText(link);
+      const b=$('#copyBtn'); b.textContent='Copied ✅'; setTimeout(()=>b.textContent='Copy scan link',1200);
+    }catch{}
   };
 }
-window.addEventListener('load', loadSticker);
+
+/* تلميح تدوير الشاشة لو Portrait */
+function updateOrientHint(){
+  const hint=$('#orientHint');
+  if(window.innerHeight>window.innerWidth){ hint.style.display='flex'; }
+  else{ hint.style.display='none'; }
+}
+window.addEventListener('resize', updateOrientHint);
+window.addEventListener('orientationchange', updateOrientHint);
+
+window.addEventListener('load', ()=>{ updateOrientHint(); loadSticker(); });
 window.addEventListener('hashchange', loadSticker);
 </script>
 </body>
