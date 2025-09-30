@@ -1,1 +1,221 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>PPM Tabuk – QR</title>
+<style>
+  :root{
+    --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --card:#fff;
+    --badge:#0ea5e9;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#0b1220;color:#e5e7eb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
 
+  .container{max-width:1100px;margin:0 auto;padding:16px}
+  h1{margin:6px 0 14px}
+  .card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:14px;margin:10px 0;box-shadow:0 10px 26px rgba(0,0,0,.28)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0}
+  input,select{padding:10px 12px;border-radius:10px;border:1px solid #374151;background:#0b1220;color:#fff;min-width:220px}
+  .btn{padding:10px 14px;border-radius:10px;border:0;background:#10b981;color:#062e26;font-weight:700;cursor:pointer}
+  .btn.secondary{background:#3b82f6;color:#e0f2fe}
+  .hint{color:#93c5fd;font-size:13px}
+
+  /* بطاقة الطباعة */
+  .sheet{background:#f8fafc;color:#111827;display:grid;gap:12px}
+  /* وضع A4: شبكة */
+  .sheet.a4{grid-template-columns:repeat(3, 1fr)}
+  /* بطاقة QR */
+  .qr-card{
+    background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;gap:6px
+  }
+  .qr-title{font-weight:800;font-size:13px;margin:0}
+  .qr-img{width:180px;height:180px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;display:block}
+  .qr-ctrl{font-weight:800;letter-spacing:.2px}
+
+  /* وضع 6×4 سم: بطاقة واحدة بالحجم المطلوب */
+  .sheet.six-four{grid-template-columns:1fr}
+  .qr-card.six-four{width:60mm;height:40mm;justify-content:center;padding:3mm 4mm}
+  .qr-card.six-four .qr-title{font-size:10px}
+  .qr-card.six-four .qr-img{width:22mm;height:22mm}
+  .qr-card.six-four .qr-ctrl{font-size:11px}
+
+  /* طباعة */
+  @media print{
+    @page{size:A4;margin:8mm}
+    body{background:#fff}
+    .card, .controls, .hint{display:none !important}
+    .sheet{margin:0}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card controls">
+    <h1>توليد أكواد QR</h1>
+    <div class="row">
+      <select id="size">
+        <option value="a4" selected>تخطيط A4 (شبكة متعددة)</option>
+        <option value="six-four">ملصق منفرد 6 × 4 سم</option>
+      </select>
+      <button class="btn secondary" id="printBtn">طباعة</button>
+      <span class="hint">مهم: أي مسح للكود هيفتح صفحة الاستيكر مباشرة.</span>
+    </div>
+    <div class="row">
+      <input id="ctrl" placeholder="Control Number (مثال: AS-0001)"/>
+      <button class="btn" id="addOne">إضافة جهاز واحد</button>
+    </div>
+    <div class="row">
+      <select id="site"></select>
+      <select id="dept"></select>
+      <button class="btn" id="addDept">إضافة كل أجهزة القسم</button>
+      <span class="hint">اختياري: لو اخترت الموقع → هنملأ الأقسام التابعة له تلقائيًا.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="sheet" class="sheet a4"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script type="module">
+/* ================= Firebase ================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
+  authDomain:"pmqrtabuk.firebaseapp.com",
+  projectId:"pmqrtabuk",
+  storageBucket:"pmqrtabuk.firebasestorage.app",
+  messagingSenderId:"305570616285",
+  appId:"1:305570616285:web:4f6839fd08b8b5aa131c34"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+/* ================= Helpers ================= */
+const $ = s=>document.querySelector(s);
+const $$ = s=>document.querySelectorAll(s);
+
+function safeId(s){ return (s||'').trim().replace(/[\/#?\s]/g,'-'); }
+
+/* الرابط الصحيح لصفحة الاستيكر */
+function stickerURL(control) {
+  const baseDir = location.origin + location.pathname.replace(/\/[^/]*$/, '/');
+  return baseDir + 'sticker.html#view/' + encodeURIComponent(control);
+}
+
+/* توليد عنصر بطاقة QR واحدة */
+function makeQRCard(control, small=false){
+  const card = document.createElement('div');
+  card.className = 'qr-card' + (small ? ' six-four' : '');
+  const title = document.createElement('div');
+  title.className = 'qr-title';
+  title.textContent = 'Preventive Maintenance';
+  const img = document.createElement('img');
+  img.className = 'qr-img';
+  img.alt = 'QR';
+  const ctrl = document.createElement('div');
+  ctrl.className = 'qr-ctrl';
+  ctrl.textContent = control;
+
+  card.appendChild(title);
+  card.appendChild(img);
+  card.appendChild(ctrl);
+
+  const url = stickerURL(control);
+  QRCode.toDataURL(url, {width: small? 220 : 360, margin: 0})
+    .then(u => img.src = u)
+    .catch(()=> img.src = 'https://chart.googleapis.com/chart?cht=qr&chs=360x360&chl='+encodeURIComponent(url));
+
+  return card;
+}
+
+/* تحميل مواقع وأقسام مميزة من الأصول */
+async function loadSitesDepts(){
+  const siteSel = $('#site'), deptSel = $('#dept');
+  siteSel.innerHTML = `<option value="">الموقع (اختياري)</option>`;
+  deptSel.innerHTML = `<option value="">القسم (اختياري)</option>`;
+
+  const qs = await getDocs(collection(db,'assets'));
+  const sites = new Set(); const bySite = {};
+  qs.forEach(d=>{
+    const a=d.data();
+    if(a.site){ sites.add(a.site); bySite[a.site]=bySite[a.site]||new Set(); if(a.department) bySite[a.site].add(a.department); }
+  });
+
+  [...sites].sort().forEach(s=>{
+    const o=document.createElement('option'); o.value=o.textContent=s; siteSel.appendChild(o);
+  });
+
+  siteSel.onchange = ()=>{
+    const s=siteSel.value;
+    deptSel.innerHTML = `<option value="">القسم (اختياري)</option>`;
+    if(!s || !bySite[s]) return;
+    [...bySite[s]].sort().forEach(d=>{
+      const o=document.createElement('option'); o.value=o.textContent=d; deptSel.appendChild(o);
+    });
+  };
+}
+
+/* إضافة جهاز واحد */
+$('#addOne').onclick = async ()=>{
+  const control = $('#ctrl').value.trim();
+  if(!control) return alert('اكتب الكنترول نمبر');
+  const size = $('#size').value;
+  const sheet = $('#sheet');
+  if(size==='six-four'){ sheet.classList.remove('a4'); sheet.classList.add('six-four'); sheet.innerHTML=''; }
+  else{ sheet.classList.remove('six-four'); sheet.classList.add('a4'); }
+
+  // لو عايز تتأكد إنه موجود في الداتا
+  const snap = await getDocs(query(collection(db,'assets'), where('control','==', control)));
+  if(snap.empty){
+    // مسموح نطبع QR حتى لو لسه مضافش؟ لو لأ، علّق السطرين الجايين
+    // alert('الجهاز غير موجود في قاعدة البيانات'); return;
+  }
+  sheet.appendChild(makeQRCard(control, $('#size').value==='six-four'));
+  $('#ctrl').value='';
+};
+
+/* إضافة كل أجهزة القسم */
+$('#addDept').onclick = async ()=>{
+  const site = $('#site').value.trim();
+  const dept = $('#dept').value.trim();
+  if(!site || !dept) return alert('اختَر الموقع والقسم أولاً');
+
+  const size = $('#size').value;
+  const sheet = $('#sheet');
+  if(size==='six-four'){ sheet.classList.remove('a4'); sheet.classList.add('six-four'); sheet.innerHTML=''; }
+  else{ sheet.classList.remove('six-four'); sheet.classList.add('a4'); }
+
+  const q = query(
+    collection(db,'assets'),
+    where('site','==', site),
+    where('department','==', dept)
+  );
+  const qs = await getDocs(q);
+  if(qs.empty) return alert('لا توجد أجهزة لهذا القسم');
+
+  qs.forEach(d=>{
+    const a=d.data();
+    if(a.control) sheet.appendChild(makeQRCard(a.control, size==='six-four'));
+  });
+};
+
+/* طباعة */
+$('#printBtn').onclick = ()=> window.print();
+
+/* تغيير المقاس يمسح/يحافظ على التخطيط فقط */
+$('#size').onchange = ()=>{
+  const sheet = $('#sheet');
+  if($('#size').value==='six-four'){ sheet.classList.remove('a4'); sheet.classList.add('six-four'); }
+  else{ sheet.classList.remove('six-four'); sheet.classList.add('a4'); }
+};
+
+/* بدء التشغيل */
+loadSitesDepts();
+</script>
+</body>
+</html>
