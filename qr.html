@@ -1,138 +1,147 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>توليد QR</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<style>
-  body{background:#0b1220;color:#e5e7eb}
-  .card{background:#111827;border:1px solid #1f2937;border-radius:14px;box-shadow:0 14px 36px rgba(0,0,0,.35)}
-  .input{width:100%;padding:.9rem 1rem;border-radius:12px;border:1px solid #374151;background:#0b1220;color:#fff}
-  .btn{padding:.8rem 1rem;border-radius:12px;font-weight:800}
-  .btn-main{background:#10b981;color:#062e2a}
-  .btn-sec{background:#3b82f6;color:#e0f2fe}
-  .qr{width:240px;height:240px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center}
-  .notice{position:sticky;top:0;text-align:center;font-weight:800;padding:.5rem 1rem}
-  .n-ok{background:rgba(16,185,129,.15);border-bottom:1px solid rgba(16,185,129,.45);color:#86efac}
-  .n-err{background:rgba(239,68,68,.15);border-bottom:1px solid rgba(239,68,68,.45);color:#fecaca}
-  .n-info{background:rgba(59,130,246,.15);border-bottom:1px solid rgba(59,130,246,.45);color:#bfdbfe}
-  a.link{color:#67e8f9;word-break:break-all}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>توليد QR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{background:#0b1220;color:#e5e7eb}
+    .card{background:#111827;border:1px solid #1f2937;border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,.3)}
+    .qrbox{width:240px;height:240px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center}
+    .notice{position:sticky;top:0;padding:8px 12px;text-align:center;font-weight:700}
+    .n-info{background:#1f2937;color:#93c5fd}
+    .n-ok{background:#062e18;color:#a7f3d0}
+    .n-err{background:#3a0d0d;color:#fecaca}
+    input{background:#0b1220;border:1px solid #374151;border-radius:10px;padding:10px 12px;color:#fff}
+    a.link{color:#67e8f9;word-break:break-all}
+  </style>
 </head>
 <body class="min-h-screen">
-<div id="notice" class="notice n-info">أدخل الكنترول نمبر أو افتح الصفحة من زر QR في الجدول…</div>
+  <div id="notice" class="notice n-info">اكتب الكنترول نمبر أو افتح الصفحة من زر QR داخل الجدول.</div>
 
-<main class="max-w-3xl mx-auto p-4">
-  <div class="card p-5">
-    <h1 class="text-2xl font-extrabold mb-4">توليد كود QR</h1>
-    <div class="grid md:grid-cols-[1fr_auto_auto] gap-3 items-end">
-      <div>
-        <label class="block mb-2 text-slate-300">Control Number</label>
-        <input id="control" class="input" placeholder="(مثال: AS-0001)"/>
+  <main class="max-w-4xl mx-auto p-4">
+    <div class="card p-5">
+      <h1 class="text-2xl font-extrabold mb-4">توليد كود QR</h1>
+
+      <div class="flex gap-3 items-center mb-4 flex-wrap">
+        <label class="text-slate-300">Control Number</label>
+        <input id="control" placeholder="AS-0001 (مثال)" class="min-w-[260px]"/>
+        <button id="btnGen"  class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-bold">توليد</button>
+        <button id="btnClear"class="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-500 font-bold">مسح</button>
       </div>
-      <button id="btnGen" class="btn btn-main">توليد</button>
-      <button id="btnClear" class="btn btn-sec">مسح</button>
-    </div>
 
-    <div class="mt-5 grid md:grid-cols-[240px_1fr] gap-4 items-start">
-      <div class="qr"><img id="qrImg" alt="QR"/></div>
-      <div>
-        <div class="mb-2 text-slate-400">رابط المسح (يفتح الاستيكر):</div>
-        <a id="qrLink" class="link" target="_blank"></a>
-        <div class="mt-4 flex gap-3">
-          <button id="btnPrint" class="btn btn-sec">طباعة QR</button>
-          <button id="btnCopy"  class="btn btn-sec">نسخ الرابط</button>
+      <div class="flex gap-5 items-start flex-wrap">
+        <div class="qrbox"><img id="qrImg" alt="QR" /></div>
+        <div class="grow">
+          <div class="mb-2 text-slate-300">رابط المسح (يفتح الاستيكر مباشرة):</div>
+          <a id="qrLink" class="link" target="_blank"></a>
+          <div class="mt-4 flex gap-3">
+            <button id="btnCopy"  class="px-3 py-2 rounded bg-sky-600 hover:bg-sky-500 font-bold">نسخ الرابط</button>
+            <button id="btnPrint" class="px-3 py-2 rounded bg-sky-700 hover:bg-sky-600 font-bold">طباعة</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</main>
+  </main>
 
-<script>
-const $ = s => document.querySelector(s);
-const notice = (m,t='info')=>{
-  const n=$('#notice'); n.textContent=m;
-  n.className='notice '+(t==='ok'?'n-ok':t==='error'?'n-err':'n-info');
-};
+  <!-- مكتبة توليد الـ QR -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
-// يبني رابط الاستيكر
-function stickerLink(control){
-  const base = location.origin + location.pathname.replace(/[^\/]+$/,''); // مسار المجلد الحالي
-  return base + 'sticker.html#view/' + encodeURIComponent(control);
-}
+  <script>
+    const $ = s => document.querySelector(s);
+    const notice = (m,t='info')=>{
+      const n=$('#notice');
+      n.textContent=m;
+      n.className = 'notice ' + (t==='ok'?'n-ok':t==='error'?'n-err':'n-info');
+    };
 
-// توليد QR محليًا
-function renderQR(text){
-  const img = $('#qrImg');
-  QRCode.toDataURL(text,{width:240,margin:1})
-    .then(url=> img.src=url)
-    .catch(()=> img.src='https://chart.googleapis.com/chart?cht=qr&chs=240x240&chl='+encodeURIComponent(text));
-}
+    // يبني رابط الاستيكر من الكونترول
+    function stickerURL(control){
+      const base = location.origin + location.pathname.replace(/[^\/]+$/,''); // مجلد الموقع الحالي
+      // لو ملفك اسمه sticker.html وموجود بجوار qr.html:
+      return base + 'sticker.html#view/' + encodeURIComponent(control);
+    }
 
-// إجراء التوليد
-function generate(){
-  const control = $('#control').value.trim();
-  if(!control){ notice('اكتب الكنترول نمبر أولاً','error'); return; }
-  const link = stickerLink(control);
-  $('#qrLink').textContent = link;
-  $('#qrLink').href = link;
-  renderQR(link);
-  notice('تم توليد QR ورابط الاستيكر ✅','ok');
-}
+    async function generate(){
+      const control = $('#control').value.trim();
+      if(!control){ notice('اكتب الكنترول نمبر','error'); return; }
+      const link = stickerURL(control);
 
-// تفريغ
-function clearAll(){
-  $('#control').value='';
-  $('#qrImg').src='';
-  $('#qrLink').textContent='';
-  $('#qrLink').href='';
-  notice('تم المسح','info');
-}
+      // توليد صورة QR محليًا
+      try{
+        const dataUrl = await QRCode.toDataURL(link, { width: 240, margin: 1 });
+        $('#qrImg').src = dataUrl;
+        $('#qrLink').href = link;
+        $('#qrLink').textContent = link;
+        notice('تم توليد الـ QR والرابط بنجاح ✅','ok');
+      }catch(e){
+        notice('فشل توليد الـ QR: '+(e.message||''),'error');
+        console.error(e);
+      }
+    }
 
-$('#btnGen').onclick = generate;
-$('#btnClear').onclick = clearAll;
-$('#btnCopy').onclick = async ()=>{
-  const t=$('#qrLink').href; if(!t) return;
-  try{ await navigator.clipboard.writeText(t); notice('تم نسخ الرابط ✅','ok'); }catch{}
-};
-$('#btnPrint').onclick = ()=>{
-  const w=window.open('','_blank','width=480,height=520');
-  const img = $('#qrImg').src, link=$('#qrLink').href, ctrl=$('#control').value.trim();
-  w.document.write(`<!doctype html><html lang="ar"><head><meta charset="utf-8"/>
-  <title>QR • ${ctrl}</title><style>
-  body{font-family:system-ui,Segoe UI,Roboto,Arial;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
-  .box{border:1px solid #ddd;border-radius:12px;padding:16px;text-align:center}
-  img{width:260px;height:260px}
-  a{display:block;margin-top:8px;word-break:break-all;color:#0ea5e9;text-decoration:none}
-  </style></head><body>
+    // أزرار
+    $('#btnGen').onclick = generate;
+    $('#btnClear').onclick = ()=>{
+      $('#control').value='';
+      $('#qrImg').src='';
+      $('#qrLink').textContent='';
+      $('#qrLink').href='';
+      notice('تم المسح.','info');
+    };
+    $('#btnCopy').onclick = async ()=>{
+      if(!$('#qrLink').href){ notice('لا يوجد رابط لنسخه','error'); return; }
+      try{ await navigator.clipboard.writeText($('#qrLink').href);
+           notice('تم نسخ الرابط ✅','ok'); }catch{ notice('تعذر النسخ','error'); }
+    };
+
+    // طباعة الـ QR في نافذة صغيرة
+    $('#btnPrint').onclick = ()=>{
+      const img = $('#qrImg').src;
+      const link = $('#qrLink').href;
+      const ctrl = $('#control').value.trim();
+
+      const w = window.open('', '_blank', 'width=480,height=520');
+      w.document.write(`<!doctype html>
+<html lang="ar"><head><meta charset="utf-8"/>
+  <title>QR • ${ctrl}</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#fff}
+    .box{border:1px solid #ddd;border-radius:12px;padding:16px 18px;text-align:center}
+    img{width:260px;height:260px}
+    a{display:block;margin-top:10px;word-break:break-all;color:#0ea5e9;text-decoration:none}
+    .c{margin-bottom:8px;font-weight:700}
+  </style>
+</head><body>
   <div class="box">
-    <div><b>${ctrl}</b></div>
+    <div class="c">${ctrl}</div>
     <img src="${img}" alt="QR"/>
     <a href="${link}" target="_blank">${link}</a>
   </div>
-  <script>window.print()</script>
-  </body></html>`);
-  w.document.close();
-};
+  <script>window.print();<\/script>
+</body></html>`);
+      w.document.close();
+    };
 
-// ===== قراءة الكنترول من URL والهاش وتوليد تلقائي =====
-(function initFromURL(){
-  const qs = new URLSearchParams(location.search);
-  // أولوية لباراميتر ?control= ، وإلا جرّب #control=<value>
-  let control = qs.get('control');
-  if(!control){
-    const m = (location.hash||'').match(/control=([^&]+)/i);
-    if(m) control = decodeURIComponent(m[1]);
-  }
-  if(control){
-    $('#control').value = control;
-    generate(); // توليد تلقائي
-  }else{
-    notice('اكتب الكنترول نمبر أو افتح من زر QR داخل الجدول.','info');
-  }
-})();
-</script>
+    // قراءة الكنترول من الـ URL والهاش وتوليد تلقائي
+    (function initFromURL(){
+      const qs = new URLSearchParams(location.search);
+      let control = qs.get('control');
+      if(!control){
+        const m = (location.hash||'').match(/control=([^&]+)/i);
+        if(m) control = decodeURIComponent(m[1]);
+      }
+      if(control){
+        $('#control').value = control;
+        generate();
+      }else{
+        notice('اكتب الكنترول نمبر أو افتح من زر QR داخل الجدول.','info');
+      }
+    })();
+
+    // Enter shortcut
+    $('#control').addEventListener('keydown',e=>{ if(e.key==='Enter') generate(); });
+  </script>
 </body>
 </html>
