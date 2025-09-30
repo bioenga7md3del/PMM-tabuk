@@ -1,147 +1,231 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>توليد QR</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body{background:#0b1220;color:#e5e7eb}
-    .card{background:#111827;border:1px solid #1f2937;border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,.3)}
-    .qrbox{width:240px;height:240px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center}
-    .notice{position:sticky;top:0;padding:8px 12px;text-align:center;font-weight:700}
-    .n-info{background:#1f2937;color:#93c5fd}
-    .n-ok{background:#062e18;color:#a7f3d0}
-    .n-err{background:#3a0d0d;color:#fecaca}
-    input{background:#0b1220;border:1px solid #374151;border-radius:10px;padding:10px 12px;color:#fff}
-    a.link{color:#67e8f9;word-break:break-all}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>توليد وطبـاعة QR</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+  :root{
+    --bg:#0b1220; --card:#111827; --muted:#94a3b8; --text:#e5e7eb;
+    --ok:#10b981; --info:#3b82f6; --warn:#f59e0b;
+    --ink:#111827;
+    --border:#d1d5db;
+  }
+  body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px}
+  .card{background:var(--card);border:1px solid #1f2937;border-radius:14px;padding:16px;box-shadow:0 14px 40px rgba(0,0,0,.35)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+  input,select{padding:10px 12px;border-radius:10px;border:1px solid #374151;background:#0b1220;color:#fff}
+  .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+  .btn.ok{background:#10b981;color:#062e2e}
+  .btn.info{background:#3b82f6;color:#eaf2ff}
+  .btn.warn{background:#f59e0b;color:#2b1a00}
+  .notice{position:sticky;top:0;z-index:1000;margin-bottom:8px;padding:10px 14px;border-radius:10px;font-weight:800;text-align:center}
+  .n-ok{background:rgba(16,185,129,.15);color:#a7f3d0;border:1px solid rgba(16,185,129,.45)}
+  .n-info{background:rgba(59,130,246,.15);color:#bfdbfe;border:1px solid rgba(59,130,246,.45)}
+  .n-err{background:rgba(239,68,68,.15);color:#fecaca;border:1px solid rgba(239,68,68,.45)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+
+  /* ====== قالب الملصق ====== */
+  .label{
+    background:#fff;color:var(--ink);border:1px solid var(--border);
+    border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.12);
+  }
+  .label .title{font-weight:900;text-align:center;margin:6px 0 10px 0}
+  .label .qrBox{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .label .qrBox img{display:block}
+  .label .control{font-weight:800;letter-spacing:.5px}
+
+  /* أحجام المعاينة على الشاشة */
+  .preview-a4 .label{width: 62mm; height: 40mm;}      /* مستطيلات وسط A4 */
+  .preview-50x25 .label{width:50mm; height:25mm;}
+  .preview-60x40 .label{width:60mm; height:40mm;}
+
+  .preview-50x25 .title{font-size:10px}
+  .preview-60x40 .title{font-size:12px}
+  .preview-a4    .title{font-size:12px}
+
+  .preview-50x25 .qrBox img{width:18mm;height:18mm}
+  .preview-60x40 .qrBox img{width:28mm;height:28mm}
+  .preview-a4    .qrBox img{width:26mm;height:26mm}
+
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  /* ====== طباعة ====== */
+  @media print{
+    body{background:#fff}
+    .card, .controls, .notice{display:none !important}
+    #printArea{margin:0}
+    .label{box-shadow:none;margin:0 auto;break-inside:avoid}
+  }
+  /* A4: نجعل الصفحة A4 مع هوامش صغيرة وشبكة */
+  @media print{
+    @page{ size: A4; margin: 8mm }
+  }
+  /* مقاسات مخصصة لملصقات Zebra (تحتاج متصفح سطح مكتب لطباعة المقاس بدقة) */
+  @media print{
+    .for-50x25  {@page{ size: 50mm 25mm; margin: 1mm }}
+    .for-60x40  {@page{ size: 60mm 40mm; margin: 1mm }}
+  }
+</style>
 </head>
-<body class="min-h-screen">
-  <div id="notice" class="notice n-info">اكتب الكنترول نمبر أو افتح الصفحة من زر QR داخل الجدول.</div>
+<body>
+<div id="notice" class="notice n-info">جارِ تهيئة الصفحة…</div>
 
-  <main class="max-w-4xl mx-auto p-4">
-    <div class="card p-5">
-      <h1 class="text-2xl font-extrabold mb-4">توليد كود QR</h1>
-
-      <div class="flex gap-3 items-center mb-4 flex-wrap">
-        <label class="text-slate-300">Control Number</label>
-        <input id="control" placeholder="AS-0001 (مثال)" class="min-w-[260px]"/>
-        <button id="btnGen"  class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-bold">توليد</button>
-        <button id="btnClear"class="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-500 font-bold">مسح</button>
-      </div>
-
-      <div class="flex gap-5 items-start flex-wrap">
-        <div class="qrbox"><img id="qrImg" alt="QR" /></div>
-        <div class="grow">
-          <div class="mb-2 text-slate-300">رابط المسح (يفتح الاستيكر مباشرة):</div>
-          <a id="qrLink" class="link" target="_blank"></a>
-          <div class="mt-4 flex gap-3">
-            <button id="btnCopy"  class="px-3 py-2 rounded bg-sky-600 hover:bg-sky-500 font-bold">نسخ الرابط</button>
-            <button id="btnPrint" class="px-3 py-2 rounded bg-sky-700 hover:bg-sky-600 font-bold">طباعة</button>
-          </div>
-        </div>
-      </div>
+<div class="wrap">
+  <div class="card">
+    <h1 style="margin:0 0 8px 0">توليد أكواد QR</h1>
+    <div class="row controls">
+      <input id="control" placeholder="Control Number (مثال: AS-0001)"/>
+      <select id="size">
+        <option value="a4">A4 (شبكة ملصقات)</option>
+        <option value="50x25">Zebra 5 × 2.5 cm</option>
+        <option value="60x40">Zebra 6 × 4 cm</option>
+      </select>
+      <button class="btn ok"   id="btnOne">توليد ملصق</button>
+      <button class="btn info" id="btnPrint">طباعة الحالي</button>
     </div>
-  </main>
 
-  <!-- مكتبة توليد الـ QR -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <div class="row controls">
+      <select id="siteSel"><option value="">اختر الموقع</option></select>
+      <select id="deptSel"><option value="">اختر القسم</option></select>
+      <button class="btn warn" id="btnDept">توليد وطباعة القسم بالكامل</button>
+    </div>
 
-  <script>
-    const $ = s => document.querySelector(s);
-    const notice = (m,t='info')=>{
-      const n=$('#notice');
-      n.textContent=m;
-      n.className = 'notice ' + (t==='ok'?'n-ok':t==='error'?'n-err':'n-info');
-    };
-
-    // يبني رابط الاستيكر من الكونترول
-    function stickerURL(control){
-      const base = location.origin + location.pathname.replace(/[^\/]+$/,''); // مجلد الموقع الحالي
-      // لو ملفك اسمه sticker.html وموجود بجوار qr.html:
-      return base + 'sticker.html#view/' + encodeURIComponent(control);
-    }
-
-    async function generate(){
-      const control = $('#control').value.trim();
-      if(!control){ notice('اكتب الكنترول نمبر','error'); return; }
-      const link = stickerURL(control);
-
-      // توليد صورة QR محليًا
-      try{
-        const dataUrl = await QRCode.toDataURL(link, { width: 240, margin: 1 });
-        $('#qrImg').src = dataUrl;
-        $('#qrLink').href = link;
-        $('#qrLink').textContent = link;
-        notice('تم توليد الـ QR والرابط بنجاح ✅','ok');
-      }catch(e){
-        notice('فشل توليد الـ QR: '+(e.message||''),'error');
-        console.error(e);
-      }
-    }
-
-    // أزرار
-    $('#btnGen').onclick = generate;
-    $('#btnClear').onclick = ()=>{
-      $('#control').value='';
-      $('#qrImg').src='';
-      $('#qrLink').textContent='';
-      $('#qrLink').href='';
-      notice('تم المسح.','info');
-    };
-    $('#btnCopy').onclick = async ()=>{
-      if(!$('#qrLink').href){ notice('لا يوجد رابط لنسخه','error'); return; }
-      try{ await navigator.clipboard.writeText($('#qrLink').href);
-           notice('تم نسخ الرابط ✅','ok'); }catch{ notice('تعذر النسخ','error'); }
-    };
-
-    // طباعة الـ QR في نافذة صغيرة
-    $('#btnPrint').onclick = ()=>{
-      const img = $('#qrImg').src;
-      const link = $('#qrLink').href;
-      const ctrl = $('#control').value.trim();
-
-      const w = window.open('', '_blank', 'width=480,height=520');
-      w.document.write(`<!doctype html>
-<html lang="ar"><head><meta charset="utf-8"/>
-  <title>QR • ${ctrl}</title>
-  <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#fff}
-    .box{border:1px solid #ddd;border-radius:12px;padding:16px 18px;text-align:center}
-    img{width:260px;height:260px}
-    a{display:block;margin-top:10px;word-break:break-all;color:#0ea5e9;text-decoration:none}
-    .c{margin-bottom:8px;font-weight:700}
-  </style>
-</head><body>
-  <div class="box">
-    <div class="c">${ctrl}</div>
-    <img src="${img}" alt="QR"/>
-    <a href="${link}" target="_blank">${link}</a>
+    <div id="printArea" class="grid preview-a4"></div>
   </div>
-  <script>window.print();<\/script>
-</body></html>`);
-      w.document.close();
-    };
+</div>
 
-    // قراءة الكنترول من الـ URL والهاش وتوليد تلقائي
-    (function initFromURL(){
-      const qs = new URLSearchParams(location.search);
-      let control = qs.get('control');
-      if(!control){
-        const m = (location.hash||'').match(/control=([^&]+)/i);
-        if(m) control = decodeURIComponent(m[1]);
-      }
-      if(control){
-        $('#control').value = control;
-        generate();
-      }else{
-        notice('اكتب الكنترول نمبر أو افتح من زر QR داخل الجدول.','info');
-      }
-    })();
+<!-- مكتبة QR -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
-    // Enter shortcut
-    $('#control').addEventListener('keydown',e=>{ if(e.key==='Enter') generate(); });
-  </script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
+  authDomain: "pmqrtabuk.firebaseapp.com",
+  projectId: "pmqrtabuk",
+  storageBucket: "pmqrtabuk.firebasestorage.app",
+  messagingSenderId: "305570616285",
+  appId: "1:305570616285:web:4f6839fd08b8b5aa131c34"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ===== Helpers
+const $ = s=>document.querySelector(s);
+const notice = (msg,type='info')=>{
+  const el = $('#notice');
+  el.textContent = msg;
+  el.className = 'notice ' + (type==='ok'?'n-ok':type==='error'?'n-err':'n-info');
+};
+const stickerLink = (control)=> {
+  const base = location.origin + location.pathname.replace(/qr\.html$/,'') + 'sticker.html';
+  return `${base}#view/${encodeURIComponent(control)}`;
+};
+async function qrDataUrl(text, px){
+  try{ return await QRCode.toDataURL(text, {width:px, margin:1}); }
+  catch{ return `https://chart.googleapis.com/chart?cht=qr&chs=${px}x${px}&chl=${encodeURIComponent(text)}`; }
+}
+function labelHTML(title, control, qrUrl){
+  return `
+    <div class="label">
+      <div class="title">كارت الصيانة الوقائية</div>
+      <div class="qrBox">
+        <img src="${qrUrl}" alt="QR">
+        <div class="control">${control}</div>
+      </div>
+    </div>`;
+}
+function applyPreviewSize(){
+  const area = $('#printArea');
+  area.classList.remove('preview-a4','preview-50x25','preview-60x40');
+  const val = $('#size').value;
+  area.classList.add(val==='50x25'?'preview-50x25': val==='60x40'?'preview-60x40':'preview-a4');
+  // @page class for print
+  document.body.classList.remove('for-50x25','for-60x40');
+  if(val==='50x25') document.body.classList.add('for-50x25');
+  if(val==='60x40') document.body.classList.add('for-60x40');
+}
+
+// ===== One label
+async function generateOne(control){
+  if(!control){ notice('اكتب الكنترول نمبر أولاً','error'); return; }
+  const link = stickerLink(control);
+  // حدد مقاس الـQR بحسب المعاينة
+  const sz = ($('#size').value==='50x25')?180 : ($('#size').value==='60x40'?260:240);
+  const url = await qrDataUrl(link, sz);
+  $('#printArea').innerHTML = labelHTML('كارت الصيانة الوقائية', control, url);
+  notice('تم توليد الملصق ✅','ok');
+}
+
+// ===== Department labels
+async function generateDepartment(site, dept){
+  if(!site||!dept){ notice('اختر الموقع والقسم أولاً','error'); return; }
+  notice('جارِ جلب أجهزة القسم…');
+  const qs = await getDocs(query(collection(db,'assets'), where('site','==',site), where('department','==',dept), orderBy('control')));
+  if(qs.empty){ $('#printArea').innerHTML=''; notice('لا توجد أجهزة للقسم المحدد','error'); return; }
+
+  const docs = qs.docs.map(d=>d.data().control).filter(Boolean);
+  const sz = ($('#size').value==='50x25')?180 : ($('#size').value==='60x40'?260:240);
+
+  let html = '';
+  for(const c of docs){
+    const url = await qrDataUrl(stickerLink(c), sz);
+    html += labelHTML('كارت الصيانة الوقائية', c, url);
+  }
+  $('#printArea').innerHTML = html;
+  notice(`تم توليد ${docs.length} ملصقًا ✅`,'ok');
+}
+
+// ===== Populate site/dept filters (قائمة فريدة من Firestore)
+async function loadSitesAndDepts(){
+  const qs = await getDocs(query(collection(db,'assets')));
+  const sites = new Set(), deptsBySite = {};
+  qs.forEach(d=>{
+    const x = d.data();
+    if(x.site){ sites.add(x.site); deptsBySite[x.site] ||= new Set(); if(x.department) deptsBySite[x.site].add(x.department); }
+  });
+  // مواقع
+  const siteSel = $('#siteSel'); siteSel.innerHTML = '<option value="">اختر الموقع</option>' + [...sites].sort().map(s=>`<option>${s}</option>`).join('');
+  // أقسام ديناميك حسب الموقع
+  siteSel.onchange = ()=>{
+    const dSel = $('#deptSel');
+    dSel.innerHTML = '<option value="">اختر القسم</option>';
+    const S = siteSel.value;
+    if(!S) return;
+    const list = deptsBySite[S] ? [...deptsBySite[S]].sort() : [];
+    dSel.innerHTML += list.map(x=>`<option>${x}</option>`).join('');
+  };
+}
+
+// ===== Events
+$('#size').addEventListener('change', applyPreviewSize);
+$('#btnOne').addEventListener('click', ()=> generateOne( $('#control').value.trim() ));
+$('#btnDept').addEventListener('click', ()=> generateDepartment( $('#siteSel').value, $('#deptSel').value ));
+$('#btnPrint').addEventListener('click', ()=> window.print());
+
+// توليد تلقائي من URL (?control= أو #control=)
+(function initFromURL(){
+  applyPreviewSize();
+  loadSitesAndDepts().catch(console.error);
+
+  const qs = new URLSearchParams(location.search);
+  let control = qs.get('control');
+  if(!control){
+    const m = (location.hash||'').match(/control=([^&]+)/i);
+    if(m) control = decodeURIComponent(m[1]);
+  }
+  if(control){
+    $('#control').value = control;
+    generateOne(control);
+  }else{
+    notice('اكتب الكنترول نمبر أو ادخل من زر QR بالجدول.','n-info');
+  }
+})();
+</script>
 </body>
 </html>
