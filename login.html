@@ -1,169 +1,187 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PPM TABUK – Login</title>
-<style>
-  :root{
-    --bg:#0b1220;--panel:#0f172a;--card:#111827;--muted:#94a3b8;--text:#e5e7eb;
-    --ok:#10b981;--info:#3b82f6;--line:#1f2937;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;min-height:100vh;display:grid;place-items:center}
-  .shell{width:min(1020px,95vw);display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:16px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.45)}
-  /* left banner */
-  .banner{
-    background:linear-gradient(165deg,#1d4ed8 0%,#0ea5e9 55%,#5eead4 120%);
-    display:grid;place-items:center;padding:28px;
-  }
-  .banner .inner{max-width:420px;text-align:center}
-  .logos{display:flex;gap:16px;align-items:center;justify-content:center;margin:14px 0 6px}
-  .logos img{height:64px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
-  .w1{font-size:28px;font-weight:900;margin:6px 0 6px}
-  .w2{font-size:16px;font-weight:600;opacity:.95}
-
-  /* right form */
-  .panel{background:var(--card);border-left:1px solid var(--line);padding:26px 26px 30px;display:grid;align-content:center}
-  .title{font-size:22px;font-weight:800;margin-bottom:8px}
-  .sub{color:var(--muted);margin-bottom:22px}
-  label{display:block;font-weight:700;margin:10px 4px 6px}
-  input, select{
-    width:100%;padding:12px;border-radius:10px;border:1px solid #374151;background:#0b1220;color:#fff;
-  }
-  input::placeholder{color:#6b7280}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
-  .btn{padding:12px;border:0;border-radius:10px;font-weight:800;cursor:pointer}
-  .primary{background:var(--ok);color:#064e3b}
-  .secondary{background:var(--info);color:#dbeafe}
-  .link{display:inline-block;margin-top:10px;color:#93c5fd;text-decoration:none}
-  .msg{margin-top:14px;color:#fcd34d}
-  .foot{margin-top:18px;color:#64748b;font-size:12px}
-
-  /* responsive: stack */
-  @media (max-width:900px){
-    .shell{grid-template-columns:1fr}
-    .banner{display:none}
-  }
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Login • PPM TABUK</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{background:#0b1220}
+    .card{background:#ffffff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+    .leftClip{clip-path: inset(0 0 0 0 round 18px 0 0 18px)}
+    .brand-img{filter: drop-shadow(0 6px 16px rgba(0,0,0,.15))}
+    .notice{position:sticky;top:0;text-align:center;font-weight:800}
+    .n-ok{background:#e8fff4;color:#065f46}
+    .n-err{background:#ffe8e8;color:#7f1d1d}
+    .n-info{background:#e8f1ff;color:#1e3a8a}
+  </style>
 </head>
-<body>
-  <div class="shell">
-    <!-- Left banner -->
-    <aside class="banner">
-      <div class="inner">
-        <div class="logos">
-          <img src="assets/FGC.jpeg" alt="FGC"/>
-          <img src="assets/TabukCluster.jpeg" alt="Tabuk"/>
-        </div>
-        <div class="w1">Welcome to PPM TABUK</div>
-        <div class="w2">إدارة الصيانة – قسم الأجهزة الطبية</div>
+<body class="min-h-screen flex items-center justify-center px-4 py-8">
+
+  <!-- إشعار -->
+  <div id="notice" class="notice n-info w-full max-w-5xl mx-auto mb-4 rounded-lg py-2 hidden"></div>
+
+  <main class="card w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
+    <!-- يسار -->
+    <aside class="leftClip hidden lg:flex flex-col items-center justify-center gap-8 bg-gradient-to-br from-sky-500 to-blue-600 p-10 text-white">
+      <div class="text-center leading-relaxed">
+        <div class="text-2xl font-extrabold tracking-wide">Welcome to PPM TABUK</div>
+        <div class="mt-2 text-base opacity-90 font-semibold">إدارة الصيانة — قسم الأجهزة الطبية</div>
+      </div>
+      <div class="flex flex-col items-center gap-6">
+        <img src="TabukCluster.jpeg" alt="Tabuk Health Cluster" class="brand-img h-20 object-contain"/>
+        <img src="FGC.jpeg" alt="First Gulf Company" class="brand-img h-16 object-contain"/>
       </div>
     </aside>
 
-    <!-- Right form -->
-    <main class="panel">
-      <div class="title">تسجيل الدخول</div>
-      <div class="sub">ادخل بريدك الإلكتروني وكلمة المرور.</div>
-
-      <label for="email">البريد الإلكتروني</label>
-      <input id="email" type="email" placeholder="name@example.com"/>
-
-      <label for="password">كلمة المرور</label>
-      <input id="password" type="password" placeholder="••••••••"/>
-
-      <a class="link" href="#" id="forgot">نسيت كلمة المرور؟</a>
-
-      <div class="actions">
-        <button class="btn primary" id="loginBtn">تسجيل الدخول</button>
-        <button class="btn secondary" id="registerBtn">إضافة مستخدم جديد</button>
-      </div>
-
-      <!-- اختيار الدور عند الإنشاء فقط (افتراضي Technician) -->
-      <div class="row" style="margin-top:12px">
-        <div>
-          <label for="name">الاسم (عند إضافة مستخدم)</label>
-          <input id="name" type="text" placeholder="الاسم الكامل"/>
+    <!-- يمين -->
+    <section class="p-8 md:p-12">
+      <div class="max-w-md mx-auto">
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-6">
+          <button id="tabLogin"  class="px-4 py-2 rounded-lg font-bold bg-sky-500 text-white">تسجيل الدخول</button>
+          <button id="tabSignup" class="px-4 py-2 rounded-lg font-bold bg-slate-200 text-slate-800">إضافة مستخدم جديد</button>
         </div>
-        <div>
-          <label for="role">الدور (عند إضافة مستخدم)</label>
-          <select id="role">
-            <option value="technician" selected>Technician</option>
-            <option value="engineer">Engineer</option>
-            <option value="admin">Admin</option>
-          </select>
+
+        <!-- Login -->
+        <div id="loginPane">
+          <label class="block text-slate-700 font-semibold mb-2" for="email">Email</label>
+          <input id="email" type="email" placeholder="example@domain.com"
+                 class="w-full mb-4 px-4 py-3 rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500"/>
+
+          <div class="flex items-center justify-between">
+            <label class="block text-slate-700 font-semibold mb-2" for="password">Password</label>
+            <button id="btnReset" class="text-sky-600 hover:underline text-sm">Forgot Password ?</button>
+          </div>
+          <input id="password" type="password" placeholder="••••••••"
+                 class="w-full mb-6 px-4 py-3 rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500"/>
+
+          <button id="btnLogin"
+                  class="w-full py-3 rounded-lg bg-sky-500 hover:bg-sky-600 text-white font-bold transition">
+            Login
+          </button>
+        </div>
+
+        <!-- Signup -->
+        <div id="signupPane" class="hidden">
+          <label class="block text-slate-700 font-semibold mb-2" for="s_name">الاسم</label>
+          <input id="s_name" type="text" placeholder="الاسم الكامل"
+                 class="w-full mb-4 px-4 py-3 rounded-lg border border-slate-300 bg-slate-50 focus:ring-2 focus:ring-sky-500"/>
+
+          <label class="block text-slate-700 font-semibold mb-2" for="s_email">Email</label>
+          <input id="s_email" type="email" placeholder="user@domain.com"
+                 class="w-full mb-4 px-4 py-3 rounded-lg border border-slate-300 bg-slate-50 focus:ring-2 focus:ring-sky-500"/>
+
+          <label class="block text-slate-700 font-semibold mb-2" for="s_password">Password</label>
+          <input id="s_password" type="password" placeholder="••••••••"
+                 class="w-full mb-6 px-4 py-3 rounded-lg border border-slate-300 bg-slate-50 focus:ring-2 focus:ring-sky-500"/>
+
+          <button id="btnSignup"
+                  class="w-full py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold transition">
+            إنشاء حساب جديد
+          </button>
+
+          <p class="mt-3 text-sm text-slate-500">
+            * يتم إنشاؤه كـ <strong>viewer</strong> ويمكن ترقيته من "إدارة المستخدمين".
+          </p>
+        </div>
+
+        <div class="mt-8 text-center text-slate-500 text-sm">
+          © <span id="year"></span> PPM TABUK
         </div>
       </div>
+    </section>
+  </main>
 
-      <div id="msg" class="msg"></div>
-      <div class="foot">PPM TABUK © 2025</div>
-    </main>
-  </div>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail,
+             onAuthStateChanged, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, setDoc, doc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
+      authDomain: "pmqrtabuk.firebaseapp.com",
+      projectId: "pmqrtabuk",
+      storageBucket: "pmqrtabuk.firebasestorage.app",
+      messagingSenderId: "305570616285",
+      appId: "1:305570616285:web:4f6839fd08b8b5aa131c34"
+    };
 
-const firebaseConfig = {
-  apiKey:"AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
-  authDomain:"pmqrtabuk.firebaseapp.com",
-  projectId:"pmqrtabuk",
-  storageBucket:"pmqrtabuk.firebasestorage.app",
-  messagingSenderId:"305570616285",
-  appId:"1:305570616285:web:4f6839fd08b8b5aa131c34"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
 
-const $ = id=>document.getElementById(id);
-const msg = t => ($('msg').textContent=t);
+    const $ = s => document.querySelector(s);
+    const notice = (msg, type='info')=>{
+      const n = $('#notice');
+      n.textContent = msg;
+      n.className = 'notice ' + (type==='ok'?'n-ok':type==='error'?'n-err':'n-info');
+      n.classList.remove('hidden');
+    };
 
-$('loginBtn').onclick = async ()=>{
-  try{
-    const email=$('email').value.trim(), pass=$('password').value.trim();
-    if(!email||!pass) return msg('من فضلك أدخل البريد وكلمة المرور');
-    await signInWithEmailAndPassword(auth,email,pass);
+    // تبويب
+    $('#tabLogin').onclick = ()=>{
+      $('#loginPane').classList.remove('hidden');
+      $('#signupPane').classList.add('hidden');
+    };
+    $('#tabSignup').onclick = ()=>{
+      $('#signupPane').classList.remove('hidden');
+      $('#loginPane').classList.add('hidden');
+    };
 
-    // لو مفيش مستند للمستخدم، أنشئه بشكل خفيف (أول مرة)
-    const uid = auth.currentUser.uid;
-    const uref = doc(db,'users',uid);
-    const snap = await getDoc(uref);
-    if(!snap.exists()){
-      await setDoc(uref,{ email, role:'technician', createdAt:new Date().toISOString() });
-    }
-    msg('تم تسجيل الدخول ✅');
-    setTimeout(()=>location.href='index.html',700);
-  }catch(e){ msg('خطأ: '+e.message); }
-};
+    $('#year').textContent = new Date().getFullYear();
 
-$('registerBtn').onclick = async ()=>{
-  try{
-    const email=$('email').value.trim(), pass=$('password').value.trim();
-    const name=$('name').value.trim();
-    const role=$('role').value;
-    if(!email||!pass) return msg('من فضلك أدخل البريد وكلمة المرور (والاسم اختياري).');
+    // لو مسجل دخول بالفعل
+    onAuthStateChanged(auth, (u)=>{ if(u) window.location.href='index.html'; });
 
-    const cred = await createUserWithEmailAndPassword(auth,email,pass);
-    await setDoc(doc(db,'users',cred.user.uid),{
-      email, name: name||'', role, allowedSites:[], allowedDepartments:[],
-      createdAt:new Date().toISOString()
+    // Login
+    $('#btnLogin').addEventListener('click', async ()=>{
+      const email = $('#email').value.trim();
+      const pass  = $('#password').value;
+      if(!email || !pass){ notice('من فضلك أدخل البريد وكلمة المرور','error'); return; }
+      try{
+        await signInWithEmailAndPassword(auth, email, pass);
+        notice('تم تسجيل الدخول ✅','ok');
+        window.location.href = 'index.html';
+      }catch(e){ notice('فشل: '+e.message,'error'); }
     });
-    msg('تم إنشاء المستخدم في Authentication + Firestore ✅');
-  }catch(e){ msg('خطأ: '+e.message); }
-};
 
-$('forgot').onclick = async (e)=>{
-  e.preventDefault();
-  try{
-    const email=$('email').value.trim();
-    if(!email) return msg('اكتب بريدك ثم اضغط نسيت كلمة المرور');
-    await sendPasswordResetEmail(auth,email);
-    msg('تم إرسال رابط استعادة كلمة المرور إلى بريدك ✅');
-  }catch(e){ msg('خطأ: '+e.message); }
-};
-</script>
+    // Reset
+    $('#btnReset').addEventListener('click', async ()=>{
+      const email = $('#email').value.trim();
+      if(!email){ notice('أدخل البريد','error'); return; }
+      try{
+        await sendPasswordResetEmail(auth, email);
+        notice('تم إرسال رابط الاستعادة ✅','ok');
+      }catch(e){ notice('خطأ: '+e.message,'error'); }
+    });
+
+    // Signup
+    $('#btnSignup').addEventListener('click', async ()=>{
+      const name  = $('#s_name').value.trim();
+      const email = $('#s_email').value.trim();
+      const pass  = $('#s_password').value;
+      if(!name || !email || !pass){ notice('أكمل البيانات','error'); return; }
+
+      try{
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        await updateProfile(cred.user, { displayName: name });
+
+        await setDoc(doc(db,'users', cred.user.uid), {
+          name, email, role:'viewer', sites:[], departments:[], createdAt: serverTimestamp()
+        });
+
+        const snap = await getDoc(doc(db,'users', cred.user.uid));
+        if(snap.exists()){
+          notice('تم إنشاء الحساب ✅','ok');
+          window.location.href='index.html';
+        }else{
+          notice('تم إنشاء الحساب في Authentication لكن لم يضاف في Firestore ❌','error');
+        }
+      }catch(e){ notice('فشل التسجيل: '+e.message,'error'); }
+    });
+  </script>
 </body>
 </html>
