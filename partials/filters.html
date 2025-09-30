@@ -1,1 +1,27 @@
+<section class="card p-4 space-y-3">
+  <div class="grid grid-cols-2 md:grid-cols-8 gap-2">
+    <input id="search" placeholder="بحث (Control/Name/Tech)…" class="px-3 py-2 rounded bg-slate-900 border border-slate-700"/>
+    <select id="f_site" class="px-3 py-2 rounded bg-slate-900 border border-slate-700">
+      <option value="">كل المواقع</option>
+    </select>
+    <select id="f_dept" class="px-3 py-2 rounded bg-slate-900 border border-slate-700">
+      <option value="">كل الأقسام</option>
+    </select>
+    <select id="f_state" class="px-3 py-2 rounded bg-slate-900 border border-slate-700">
+      <option value="">كل الحالات</option>
+      <option value="active">ساري</option>
+      <option value="dueSoon">خلال 30 يوم</option>
+      <option value="overdue">منتهي</option>
+    </select>
+    <button id="btnApply" class="px-3 py-2 rounded bg-sky-500 text-slate-900 font-bold">تطبيق</button>
+    <button id="btnClear" class="px-3 py-2 rounded bg-slate-600 text-slate-100 font-bold">مسح</button>
+    <button id="btnExport" class="px-3 py-2 rounded bg-emerald-500 text-slate-900 font-bold">تصدير Excel</button>
+    <button id="btnBulkDelete" class="px-3 py-2 rounded bg-red-500 text-white font-bold opacity-60" title="احذف المحدد" disabled>حذف جماعي</button>
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    <button id="btnAddToggle" class="px-3 py-2 rounded bg-emerald-500 text-slate-900 font-bold">➕ إضافة جهاز</button>
+    <a href="qr.html" class="px-3 py-2 rounded bg-sky-500 text-slate-900 font-bold">صفحة QR</a>
+  </div>
+</section>
 
