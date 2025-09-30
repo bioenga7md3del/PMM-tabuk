@@ -1,119 +1,196 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PM-QR – Sticker</title>
+<title>PPM Tabuk – Sticker</title>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <style>
-  :root{ --ink:#111827; --muted:#6b7280; --line:#e5e7eb; }
+  :root{
+    --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
+    --ok:#16a34a; --late:#ef4444;
+    /* المقاسات المضبوطة للبطاقة CR80 */
+    --card-w:85.6mm; --card-h:54mm;
+    --head-h:10mm;         /* ارتفاع الهيدر */
+    --qr-size:22mm;        /* حجم الـ QR */
+    --gap-top:6mm;         /* مسافة بعد الهيدر قبل الـQR */
+    --gap-bottom:3mm;      /* مسافة بعد الـQR قبل التفاصيل */
+    --fs:8.6px;            /* حجم خط التفاصيل */
+  }
+
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:#f7fafc;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+
   .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:8px}
-  /* بطاقة بحجم كارت الهوية CR80: 85.6mm × 54mm */
-  .sticker{background:#fff;border:1px solid var(--line);border-radius:6px;width:85.6mm;height:54mm;max-width:100%;padding:4mm 5mm;box-shadow:0 8px 24px rgba(0,0,0,.08);display:grid;grid-template-rows:14mm 1fr}
-  .head{display:flex;align-items:center;justify-content:space-between;gap:6px}
-  .head img{height:10mm;object-fit:contain}
-  .title{font-weight:800;font-size:11px}
-  .body{display:grid;grid-template-columns:1fr 22mm;gap:4mm;align-items:start}
-  .qr{width:22mm;height:22mm;border-radius:4px;background:#fff;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);margin-top:15mm;} /* ✨ أضفنا margin-top */
-  .kv{display:grid;grid-template-columns:44% 56%;column-gap:3mm;row-gap:1.6mm;font-size:10.5px}
-  .k{color:var(--muted)} .v{font-weight:700;text-align:left}
-  .meta{margin-top:2mm;color:var(--muted);font-size:9.5px}
-  .toolbar{position:fixed;inset:auto 8px 8px 8px;display:flex;gap:8px;justify-content:center}
-  .btn{padding:10px 14px;border:1px solid var(--line);background:#fff;border-radius:10px;font-weight:700;cursor:pointer}
-  @media (max-width:480px){ .sticker{width:92vw;height:auto;grid-template-rows:auto auto} .body{grid-template-columns:1fr} .qr{justify-self:center;margin-top:10px} }
-  @media print{ body{background:#fff} .toolbar{display:none} .wrap{padding:0} .sticker{box-shadow:none;margin:0 auto} }
+  .sticker{
+    width:var(--card-w); height:var(--card-h); max-width:100%;
+    background:#fff; border:1px solid var(--line); border-radius:6px;
+    box-shadow:0 8px 24px rgba(0,0,0,.08);
+    overflow:hidden; position:relative;
+    display:grid; grid-template-rows: var(--head-h) var(--gap-top) var(--qr-size) var(--gap-bottom) 1fr;
+    grid-template-columns:100%;
+    padding:3mm 4mm;
+  }
+
+  /* Header */
+  .head{grid-row:1; display:flex; align-items:center; justify-content:space-between; gap:8px}
+  .head img{height:8.5mm; object-fit:contain}
+  .title{font-weight:800; font-size:10.5px; white-space:nowrap}
+
+  /* QR in the middle */
+  .qr{grid-row:3; justify-self:center; width:var(--qr-size); height:var(--qr-size);
+      border:1px solid var(--line); border-radius:3px}
+
+  /* Details (English, left aligned) */
+  .info{
+    grid-row:5; width:100%;
+    display:grid; grid-template-columns: 40% 60%;
+    column-gap:2mm; row-gap:1mm; font-size:var(--fs); line-height:1.2;
+    direction:ltr; text-align:left; min-height:0;
+  }
+  .k,.v{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .k{color:var(--muted)}
+  .v{font-weight:700; color:#111827}
+
+  /* Status visuals */
+  .watermark{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:24px; color:rgba(239,68,68,.18); font-weight:900; transform:rotate(-18deg);
+    pointer-events:none; z-index:0;
+  }
+  .ok{outline:2px solid var(--ok)} .late{outline:2px solid var(--late)}
+
+  /* Toolbar */
+  .toolbar{position:fixed; inset:auto 8px 8px 8px; display:flex; gap:8px; justify-content:center}
+  .btn{padding:10px 14px; border:1px solid var(--line); background:#fff; border-radius:10px; font-weight:700; cursor:pointer}
+
+  @media (max-width:480px){
+    .sticker{width:92vw; height:auto; grid-template-rows:auto 10px var(--qr-size) 8px auto}
+  }
+  @media print{
+    body{background:#fff}
+    .toolbar{display:none}
+    .wrap{padding:0}
+    .sticker{box-shadow:none;margin:0 auto}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="sticker" id="sticker">
+  <div class="sticker" id="st">
+    <!-- Header -->
     <div class="head">
-      <img id="logoCompany" src="assets/FGC.jpeg" alt="الخليجية"/>
-      <div class="title">صيانة وقائية</div>
-      <img id="logoCluster" src="assets/TabukCluster.jpeg" alt="تجمع تبوك"/>
+      <img id="logoCompany" src="assets/FGC.jpeg" alt="First Gulf Company"/>
+      <div class="title">Preventive Maintenance</div>
+      <img id="logoCluster" src="assets/TabukCluster.jpeg" alt="Tabuk Health Cluster"/>
     </div>
-    <div class="body">
-      <div class="kv">
-        <div class="k">Control</div><div class="v" id="v_control">—</div>
-        <div class="k">Name</div><div class="v" id="v_name">—</div>
-        <div class="k">Brand</div><div class="v" id="v_brand">—</div>
-        <div class="k">Serial</div><div class="v" id="v_serial">—</div>
-        <div class="k">PM Date</div><div class="v" id="v_pm">—</div>
-        <div class="k">Next PM</div><div class="v" id="v_next">—</div>
-        <div class="k">Technician</div><div class="v" id="v_tech">—</div>
-        <div class="k">Site</div><div class="v" id="v_site">—</div>
-        <div class="k">Department</div><div class="v" id="v_dept">—</div>
-      </div>
-      <div class="qr"><img id="qr" alt="QR" style="width:100%;height:100%;object-fit:contain"/></div>
+
+    <!-- QR centered -->
+    <img id="qr" class="qr" alt="QR"/>
+
+    <!-- Details (English / LTR) -->
+    <div class="info">
+      <div class="k">Control</div><div class="v" id="v_control">—</div>
+      <div class="k">Name</div><div class="v" id="v_name">—</div>
+      <div class="k">Brand</div><div class="v" id="v_brand">—</div>
+      <div class="k">Serial</div><div class="v" id="v_serial">—</div>
+      <div class="k">PM Date</div><div class="v" id="v_pm">—</div>
+      <div class="k">Next PM</div><div class="v" id="v_next">—</div>
+      <div class="k">Technician</div><div class="v" id="v_tech">—</div>
+      <div class="k">Site</div><div class="v" id="v_site">—</div>
+      <div class="k">Department</div><div class="v" id="v_dept">—</div>
     </div>
-    <div class="meta" id="meta">&nbsp;</div>
   </div>
 </div>
+
+<!-- Actions -->
 <div class="toolbar">
-  <button class="btn" onclick="window.print()">طباعة</button>
-  <button class="btn" id="copyBtn">نسخ رابط المسح</button>
+  <button class="btn" onclick="window.print()">Print</button>
+  <button class="btn" id="copyBtn">Copy scan link</button>
 </div>
 
-<!-- QR lib -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-/* ===== Firebase Config ===== */
+/* Firebase */
 const firebaseConfig = {
-  apiKey: "AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
-  authDomain: "pmqrtabuk.firebaseapp.com",
-  projectId: "pmqrtabuk",
-  storageBucket: "pmqrtabuk.firebasestorage.app",
-  messagingSenderId: "305570616285",
-  appId: "1:305570616285:web:4f6839fd08b8b5aa131c34"
+  apiKey:"AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
+  authDomain:"pmqrtabuk.firebaseapp.com",
+  projectId:"pmqrtabuk",
+  storageBucket:"pmqrtabuk.firebasestorage.app",
+  messagingSenderId:"305570616285",
+  appId:"1:305570616285:web:4f6839fd08b8b5aa131c34"
 };
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db  = getFirestore(app);
 
-/* ===== Helpers ===== */
-const $ = s => document.querySelector(s);
-const fmt = d => d ? new Date(d).toLocaleDateString('en-GB') : '—'; // ميلادي
+/* Helpers */
+const $ = s=>document.querySelector(s);
 const safeId = s => (s||'').trim().replace(/[\/#?\s]/g,'-');
-function currentStickerLink(control){
-  const base = location.origin + location.pathname;
-  return `${base}#view/${encodeURIComponent(control)}`;
+const fmt = d => d ? new Date(d).toISOString().slice(0,10) : '—';
+function stickerLink(control){ const base = location.origin + location.pathname; return `${base}#view/${encodeURIComponent(control)}`; }
+function statusOf(pm_date, next_date){
+  if(!next_date) return 'active';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const next  = new Date(next_date); next.setHours(0,0,0,0);
+  const grace = new Date(next); grace.setDate(grace.getDate()+30); // شهر سماح
+  return (today>grace)?'overdue':'active';
 }
 
-/* ===== Load data ===== */
+/* Load sticker by hash: #view/<control> */
 async function loadSticker(){
   const parts = (location.hash||'').split('/');
   const controlRaw = parts[1] ? decodeURIComponent(parts[1]) : '';
-  if(!controlRaw){ $('#meta').textContent = 'لا يوجد رقم جهاز في الرابط'; return; }
+  if(!controlRaw) return;
 
   let snap = await getDoc(doc(db,'assets', safeId(controlRaw)));
   if(!snap.exists()){
     const qs = await getDocs(query(collection(db,'assets'), where('control','==', controlRaw)));
     snap = qs.docs[0];
   }
-  if(!snap || !snap.exists()){ $('#meta').textContent = 'الجهاز غير موجود'; return; }
+  if(!snap || !snap.exists()) return;
+
   const d = snap.data();
 
+  // Fill values (English, left)
   $('#v_control').textContent = d.control || controlRaw;
-  $('#v_name').textContent = d.name || '—';
-  $('#v_brand').textContent = d.brand || '—';
-  $('#v_serial').textContent = d.serial || '—';
-  $('#v_pm').textContent = fmt(d.pm_date);
-  $('#v_next').textContent = fmt(d.next_date);
-  $('#v_tech').textContent = d.tech || '—';
-  $('#v_site').textContent = d.site || '—';
-  $('#v_dept').textContent = d.department || '—';
-  $('#meta').textContent = '';
+  $('#v_name').textContent    = d.name || '—';
+  $('#v_brand').textContent   = d.brand || '—';
+  $('#v_serial').textContent  = d.serial || '—';
+  $('#v_pm').textContent      = fmt(d.pm_date);
+  $('#v_next').textContent    = fmt(d.next_date);
+  $('#v_tech').textContent    = d.tech || '—';
+  $('#v_site').textContent    = d.site || '—';
+  $('#v_dept').textContent    = d.department || '—';
 
-  const link = currentStickerLink(d.control || controlRaw);
-  QRCode.toDataURL(link, {width: 400, margin: 1})
+  // QR for this sticker page link
+  const link = stickerLink(d.control || controlRaw);
+  QRCode.toDataURL(link, {width: 320, margin: 0})
     .then(url => { $('#qr').src = url; })
-    .catch(()=>{ $('#qr').src = 'https://chart.googleapis.com/chart?cht=qr&chs=400x400&chl=' + encodeURIComponent(link); });
+    .catch(()=>{ $('#qr').src = 'https://chart.googleapis.com/chart?cht=qr&chs=320x320&chl='+encodeURIComponent(link); });
 
-  $('#copyBtn').onclick = async ()=>{
-    try{ await navigator.clipboard.writeText(link); $('#copyBtn').textContent = 'تم النسخ ✅'; setTimeout(()=>$('#copyBtn').textContent='نسخ رابط المسح',1200); }catch{}
+  // Status frame + watermark
+  const box = document.getElementById('st');
+  box.classList.remove('ok','late');
+  [...box.querySelectorAll('.watermark')].forEach(el=>el.remove());
+  const st = statusOf(d.pm_date, d.next_date);
+  if(st==='overdue'){
+    box.classList.add('late');
+    const wm = document.createElement('div'); wm.className='watermark'; wm.textContent='Expired';
+    box.appendChild(wm);
+  }else{
+    box.classList.add('ok');
+  }
+
+  // Copy link button
+  document.getElementById('copyBtn').onclick = async ()=>{
+    try{
+      await navigator.clipboard.writeText(link);
+      const b = document.getElementById('copyBtn');
+      b.textContent='Copied ✅'; setTimeout(()=>b.textContent='Copy scan link',1200);
+    }catch{}
   };
 }
 
