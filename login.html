@@ -1,1 +1,90 @@
 
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Welcome to PPM TABUK</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{min-height:100vh;background:#0b1220;color:#e5e7eb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    .card{background:#0f172a;border:1px solid #1e293b;border-radius:16px;box-shadow:0 12px 36px rgba(0,0,0,.35)}
+    .input{padding:.7rem .9rem;border-radius:12px;background:#0b1220;border:1px solid #334155;width:100%;color:#e5e7eb}
+    .btn{padding:.7rem 1rem;border-radius:12px;font-weight:800}
+    .btn-primary{background:#10b981;color:#062a24}
+    .btn-alt{background:#0ea5e9;color:#06243b}
+  </style>
+</head>
+<body>
+  <div class="min-h-screen grid md:grid-cols-2">
+    <!-- الشعارات يسار -->
+    <div class="hidden md:flex items-center justify-center p-10">
+      <div class="text-center">
+        <img src="assets/FGC.jpeg" class="h-20 mx-auto mb-4 rounded" alt="FGC"/>
+        <img src="assets/TabukCluster.jpeg" class="h-20 mx-auto rounded" alt="Tabuk"/>
+      </div>
+    </div>
+    <!-- فورم يمين -->
+    <div class="flex items-center justify-center p-6">
+      <div class="card w-full max-w-md p-6">
+        <div class="text-center mb-2 text-xl font-extrabold">Welcome to PPM TABUK</div>
+        <div class="text-center mb-6 text-slate-400">إدارة الصيانة • قسم الأجهزة الطبية</div>
+        <div class="space-y-3">
+          <input id="email" type="email" class="input" placeholder="البريد الإلكتروني"/>
+          <input id="password" type="password" class="input" placeholder="كلمة المرور"/>
+          <button id="btnLogin" class="btn btn-primary w-full">تسجيل الدخول</button>
+        </div>
+        <hr class="my-6 border-slate-700"/>
+        <div class="space-y-3">
+          <input id="r_name" class="input" placeholder="اسم المستخدم الجديد"/>
+          <input id="r_email" type="email" class="input" placeholder="بريد المستخدم الجديد"/>
+          <input id="r_password" type="password" class="input" placeholder="كلمة المرور"/>
+          <select id="r_role" class="input">
+            <option value="tech">Technician</option>
+            <option value="engineer">Engineer</option>
+            <option value="viewer">Viewer</option>
+          </select>
+          <button id="btnRegister" class="btn btn-alt w-full">إضافة مستخدم جديد</button>
+          <div id="msg" class="text-center text-sm text-slate-400 mt-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    const firebaseConfig = {apiKey:"AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",authDomain:"pmqrtabuk.firebaseapp.com",projectId:"pmqrtabuk",storageBucket:"pmqrtabuk.firebasestorage.app",messagingSenderId:"305570616285",appId:"1:305570616285:web:4f6839fd08b8b5aa131c34"};
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const $ = s=>document.querySelector(s);
+    const msg = m=>{$('#msg').textContent=m;};
+
+    document.getElementById('btnLogin').onclick = async ()=>{
+      try{
+        const email = $('#email').value.trim();
+        const pass  = $('#password').value;
+        await signInWithEmailAndPassword(auth, email, pass);
+        location.href='index.html';
+      }catch(e){ msg('فشل تسجيل الدخول: '+e.message); }
+    };
+
+    document.getElementById('btnRegister').onclick = async ()=>{
+      try{
+        const name = $('#r_name').value.trim();
+        const email= $('#r_email').value.trim();
+        const pass = $('#r_password').value;
+        const role = $('#r_role').value;
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        const uid = cred.user.uid;
+        await setDoc(doc(db,'users', uid), {
+          name, email, role, sites: [], departments: [], createdAt: serverTimestamp()
+        }, { merge:true });
+        msg('تم إنشاء المستخدم وإضافته لقاعدة البيانات ✅');
+      }catch(e){ msg('فشل إنشاء المستخدم: '+e.message); }
+    };
+  </script>
+</body>
+</html>
