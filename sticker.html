@@ -7,98 +7,113 @@
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <style>
   :root{
+    /* ألوان وخط */
     --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
     --ok:#16a34a; --late:#ef4444;
-    /* المقاسات المضبوطة للبطاقة CR80 */
+    --fs:9.2px; /* حجم الخط */
+    /* أحجام افتراضية (CR80) */
     --card-w:85.6mm; --card-h:54mm;
-    --head-h:10mm;         /* ارتفاع الهيدر */
-    --qr-size:22mm;        /* حجم الـ QR */
-    --gap-top:6mm;         /* مسافة بعد الهيدر قبل الـQR */
-    --gap-bottom:3mm;      /* مسافة بعد الـQR قبل التفاصيل */
-    --fs:8.6px;            /* حجم خط التفاصيل */
+    --head-h:11mm;     /* ارتفاع الهيدر */
+    --qr-size:24mm;    /* حجم QR */
+    --gap-top:4mm;     /* مسافة بعد الهيدر */
+    --gap-side:4mm;    /* حواف داخلية */
   }
 
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:#f7fafc;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
 
-  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:8px}
+  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:10mm 8px}
   .sticker{
     width:var(--card-w); height:var(--card-h); max-width:100%;
     background:#fff; border:1px solid var(--line); border-radius:6px;
-    box-shadow:0 8px 24px rgba(0,0,0,.08);
-    overflow:hidden; position:relative;
-    display:grid; grid-template-rows: var(--head-h) var(--gap-top) var(--qr-size) var(--gap-bottom) 1fr;
-    grid-template-columns:100%;
-    padding:3mm 4mm;
+    box-shadow:0 8px 24px rgba(0,0,0,.08); position:relative;
+    display:grid; grid-template-rows: var(--head-h) 1fr; grid-template-columns:100%;
+    padding:0 var(--gap-side) var(--gap-side) var(--gap-side);
   }
 
   /* Header */
-  .head{grid-row:1; display:flex; align-items:center; justify-content:space-between; gap:8px}
-  .head img{height:8.5mm; object-fit:contain}
-  .title{font-weight:800; font-size:10.5px; white-space:nowrap}
-
-  /* QR in the middle */
-  .qr{grid-row:3; justify-self:center; width:var(--qr-size); height:var(--qr-size);
-      border:1px solid var(--line); border-radius:3px}
-
-  /* Details (English, left aligned) */
-  .info{
-    grid-row:5; width:100%;
-    display:grid; grid-template-columns: 40% 60%;
-    column-gap:2mm; row-gap:1mm; font-size:var(--fs); line-height:1.2;
-    direction:ltr; text-align:left; min-height:0;
+  .head{
+    display:grid; grid-template-columns: auto 1fr auto; align-items:center; gap:6px;
+    padding:4px 0;
   }
-  .k,.v{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  .k{color:var(--muted)}
-  .v{font-weight:700; color:#111827}
+  .logo{height:8.5mm; object-fit:contain}
+  .title{text-align:center; font-weight:800; font-size:11px; color:#111827; white-space:nowrap}
 
-  /* Status visuals */
+  /* Body: عمودين */
+  .body{
+    margin-top:var(--gap-top);
+    display:grid; grid-template-columns: 28mm 1fr; gap:6mm; align-items:start;
+  }
+
+  /* QR + Control تحت */
+  .qrBox{display:flex; flex-direction:column; align-items:center; gap:6px}
+  .qr{width:var(--qr-size); height:var(--qr-size); border:1px solid var(--line); border-radius:3px}
+  .ctrl{font-weight:800; font-size:10.5px; letter-spacing:0.2px}
+
+  /* جدول البيانات يمين */
+  .info{
+    display:grid; grid-template-columns: 36% 64%;
+    column-gap:3mm; row-gap:2mm; font-size:var(--fs); line-height:1.25;
+    text-align:left; direction:ltr; min-height:0;
+  }
+  .k{color:var(--muted)}
+  .v{color:#111827; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+  /* حالة منتهي */
   .watermark{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-size:24px; color:rgba(239,68,68,.18); font-weight:900; transform:rotate(-18deg);
+    font-size:26px; color:rgba(239,68,68,.18); font-weight:900; transform:rotate(-18deg);
     pointer-events:none; z-index:0;
   }
   .ok{outline:2px solid var(--ok)} .late{outline:2px solid var(--late)}
 
-  /* Toolbar */
-  .toolbar{position:fixed; inset:auto 8px 8px 8px; display:flex; gap:8px; justify-content:center}
+  /* أزرار أسفل الصفحة */
+  .toolbar{position:fixed; inset:auto 12px 12px 12px; display:flex; gap:10px; justify-content:center}
   .btn{padding:10px 14px; border:1px solid var(--line); background:#fff; border-radius:10px; font-weight:700; cursor:pointer}
 
-  @media (max-width:480px){
-    .sticker{width:92vw; height:auto; grid-template-rows:auto 10px var(--qr-size) 8px auto}
+  @media (max-width:520px){
+    :root{ --fs:9px; --qr-size:22mm }
+    .wrap{padding:8mm 6px}
+    .body{grid-template-columns: 100%; gap:10px}
+    .qrBox{order:-1}
   }
   @media print{
     body{background:#fff}
     .toolbar{display:none}
     .wrap{padding:0}
-    .sticker{box-shadow:none;margin:0 auto}
+    .sticker{box-shadow:none; margin:0 auto}
   }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="sticker" id="st">
-    <!-- Header -->
+    <!-- HEADER -->
     <div class="head">
-      <img id="logoCompany" src="assets/FGC.jpeg" alt="First Gulf Company"/>
+      <img class="logo" id="logoCompany" src="assets/FGC.jpeg" alt="First Gulf Company"/>
       <div class="title">Preventive Maintenance</div>
-      <img id="logoCluster" src="assets/TabukCluster.jpeg" alt="Tabuk Health Cluster"/>
+      <img class="logo" id="logoCluster" src="assets/TabukCluster.jpeg" alt="Tabuk Health Cluster"/>
     </div>
 
-    <!-- QR centered -->
-    <img id="qr" class="qr" alt="QR"/>
+    <!-- BODY -->
+    <div class="body">
+      <!-- Left: QR + Control -->
+      <div class="qrBox">
+        <img id="qr" class="qr" alt="QR"/>
+        <div class="ctrl" id="ctrlText">—</div>
+      </div>
 
-    <!-- Details (English / LTR) -->
-    <div class="info">
-      <div class="k">Control</div><div class="v" id="v_control">—</div>
-      <div class="k">Name</div><div class="v" id="v_name">—</div>
-      <div class="k">Brand</div><div class="v" id="v_brand">—</div>
-      <div class="k">Serial</div><div class="v" id="v_serial">—</div>
-      <div class="k">PM Date</div><div class="v" id="v_pm">—</div>
-      <div class="k">Next PM</div><div class="v" id="v_next">—</div>
-      <div class="k">Technician</div><div class="v" id="v_tech">—</div>
-      <div class="k">Site</div><div class="v" id="v_site">—</div>
-      <div class="k">Department</div><div class="v" id="v_dept">—</div>
+      <!-- Right: details -->
+      <div class="info">
+        <div class="k">Name</div><div class="v" id="v_name">—</div>
+        <div class="k">Brand</div><div class="v" id="v_brand">—</div>
+        <div class="k">Serial</div><div class="v" id="v_serial">—</div>
+        <div class="k">PM Date</div><div class="v" id="v_pm">—</div>
+        <div class="k">Next PM</div><div class="v" id="v_next">—</div>
+        <div class="k">Technician</div><div class="v" id="v_tech">—</div>
+        <div class="k">Site</div><div class="v" id="v_site">—</div>
+        <div class="k">Department</div><div class="v" id="v_dept">—</div>
+      </div>
     </div>
   </div>
 </div>
@@ -134,12 +149,24 @@ function stickerLink(control){ const base = location.origin + location.pathname;
 function statusOf(pm_date, next_date){
   if(!next_date) return 'active';
   const today = new Date(); today.setHours(0,0,0,0);
-  const next  = new Date(next_date); next.setHours(0,0,0,0);
-  const grace = new Date(next); grace.setDate(grace.getDate()+30); // شهر سماح
+  const n  = new Date(next_date); n.setHours(0,0,0,0);
+  const grace = new Date(n); grace.setDate(grace.getDate()+30); // سماح شهر
   return (today>grace)?'overdue':'active';
 }
 
-/* Load sticker by hash: #view/<control> */
+/* Size via URL: ?size=cr80 | large */
+(function applySizeFromURL(){
+  const p = new URLSearchParams(location.search).get('size');
+  if(p==='large'){
+    document.documentElement.style.setProperty('--card-w','100mm');
+    document.documentElement.style.setProperty('--card-h','65mm');
+    document.documentElement.style.setProperty('--qr-size','28mm');
+    document.documentElement.style.setProperty('--head-h','12mm');
+    document.documentElement.style.setProperty('--fs','10px');
+  }
+})();
+
+/* Load */
 async function loadSticker(){
   const parts = (location.hash||'').split('/');
   const controlRaw = parts[1] ? decodeURIComponent(parts[1]) : '';
@@ -154,24 +181,25 @@ async function loadSticker(){
 
   const d = snap.data();
 
-  // Fill values (English, left)
-  $('#v_control').textContent = d.control || controlRaw;
-  $('#v_name').textContent    = d.name || '—';
-  $('#v_brand').textContent   = d.brand || '—';
-  $('#v_serial').textContent  = d.serial || '—';
-  $('#v_pm').textContent      = fmt(d.pm_date);
-  $('#v_next').textContent    = fmt(d.next_date);
-  $('#v_tech').textContent    = d.tech || '—';
-  $('#v_site').textContent    = d.site || '—';
-  $('#v_dept').textContent    = d.department || '—';
+  // Fill values
+  const control = d.control || controlRaw;
+  $('#ctrlText').textContent = control;
+  $('#v_name').textContent   = d.name   || '—';
+  $('#v_brand').textContent  = d.brand  || '—';
+  $('#v_serial').textContent = d.serial || '—';
+  $('#v_pm').textContent     = fmt(d.pm_date);
+  $('#v_next').textContent   = fmt(d.next_date);
+  $('#v_tech').textContent   = d.tech   || '—';
+  $('#v_site').textContent   = d.site   || '—';
+  $('#v_dept').textContent   = d.department || '—';
 
-  // QR for this sticker page link
-  const link = stickerLink(d.control || controlRaw);
-  QRCode.toDataURL(link, {width: 320, margin: 0})
+  // QR for link to this sticker
+  const link = stickerLink(control);
+  QRCode.toDataURL(link, {width: 340, margin: 0})
     .then(url => { $('#qr').src = url; })
-    .catch(()=>{ $('#qr').src = 'https://chart.googleapis.com/chart?cht=qr&chs=320x320&chl='+encodeURIComponent(link); });
+    .catch(()=>{ $('#qr').src = 'https://chart.googleapis.com/chart?cht=qr&chs=340x340&chl='+encodeURIComponent(link); });
 
-  // Status frame + watermark
+  // Status
   const box = document.getElementById('st');
   box.classList.remove('ok','late');
   [...box.querySelectorAll('.watermark')].forEach(el=>el.remove());
@@ -184,7 +212,7 @@ async function loadSticker(){
     box.classList.add('ok');
   }
 
-  // Copy link button
+  // Copy link
   document.getElementById('copyBtn').onclick = async ()=>{
     try{
       await navigator.clipboard.writeText(link);
