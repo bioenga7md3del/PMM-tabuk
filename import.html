@@ -3,118 +3,138 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Import • PPM TABUK</title>
+<title>استيراد الأصول إلى Firestore • PPM TABUK</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- SheetJS (اختياري) -->
+<!-- SheetJS (لإنشاء/قراءة Excel إذا توفرت) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
 <style>
   body{background:#0b1220}
-  .card{background:#111827;border:1px solid #1f2937;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.35)}
-  .notice{position:sticky;top:0;z-index:50;margin:10px auto;max-width:1100px;padding:10px 14px;border-radius:10px;text-align:center;font-weight:800}
+  .shell{max-width:1200px;margin-inline:auto;padding:18px}
+  .panel{background:#0f172a;border:1px solid #1f2937;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .title{font-weight:900;letter-spacing:.5px}
+  .muted{color:#94a3b8}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #374151;border-radius:999px;background:#0b1220;color:#e5e7eb}
+  .btn{padding:.65rem 1rem;border-radius:.8rem;font-weight:800}
+  .btn-blue{background:#3b82f6;color:#eaf2ff}
+  .btn-green{background:#10b981;color:#062e2e}
+  .btn-rose{background:#ef4444;color:#fff}
+  .notice{position:sticky;top:0;z-index:50;margin:10px auto;max-width:1200px;padding:10px 14px;border-radius:12px;text-align:center;font-weight:800}
   .n-ok{background:rgba(16,185,129,.15);color:#a7f3d0;border:1px solid rgba(16,185,129,.45)}
   .n-info{background:rgba(59,130,246,.15);color:#bfdbfe;border:1px solid rgba(59,130,246,.45)}
   .n-err{background:rgba(239,68,68,.15);color:#fecaca;border:1px solid rgba(239,68,68,.45)}
   table{border-collapse:collapse;width:100%}
-  th,td{border-top:1px solid #1f2937;padding:8px 10px}
+  th,td{border-top:1px solid #1f2937;padding:8px 10px;white-space:nowrap}
   th{background:#0b1220;color:#c7d2fe;position:sticky;top:0}
-  .muted{color:#94a3b8}
-  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid #374151;background:#0b1220;color:#e5e7eb}
-  .btn{padding:.6rem 1rem;border-radius:.7rem;font-weight:800}
-  .btn-green{background:#10b981;color:#062e2e}
-  .btn-blue{background:#3b82f6;color:#eaf2ff}
+  .box{border:1px solid #1f2937;border-radius:14px;background:#0b1220}
+  input[type="file"]{display:none}
 </style>
 </head>
 <body class="text-slate-100">
-<div id="notice" class="notice n-info">حمّل نموذج الإكسل، املأه، ثم ارفعه للمعاينة.</div>
 
-<div class="max-w-6xl mx-auto p-4">
-  <div class="card p-4">
-    <h1 class="text-xl font-extrabold mb-3">استيراد أجهزة من Excel</h1>
+<!-- إشعار علوي -->
+<div id="notice" class="notice n-info">60 صف/دفعة — استورد ملف XLSX/CSV، عاينه ثم ارفعه.</div>
 
-    <div class="flex flex-wrap gap-3 items-center mb-3">
-      <!-- زر يعمل Excel أو CSV حسب التوفر -->
-      <button id="btnTemplate" type="button" class="btn btn-green">تحميل نموذج (Excel/CSV)</button>
-
-      <!-- رابط CSV مباشر بدون سكربت — يشتغل حتى لو كل شيء مقفول -->
-      <a id="csvDirect" class="btn btn-blue" download="pm_assets_template.csv">تحميل نموذج سريع (CSV)</a>
-
-      <label class="pill cursor-pointer">
-        اختر ملف
-        <input id="file" type="file" accept=".xlsx,.xls,.csv" class="hidden">
-      </label>
-      <span id="fileName" class="muted"></span>
-      <div class="grow"></div>
-      <button id="btnUpload" type="button" class="btn btn-blue disabled:opacity-40" disabled>رفع إلى Firestore</button>
+<div class="shell">
+  <div class="panel p-4 md:p-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
+      <div class="title text-2xl">Firestore إلى استيراد الأصول</div>
+      <div class="text-sm muted">Control Number، Site، Department، Location، PM Date، Next Date، Technician، Name، Brand، Serial</div>
     </div>
 
-    <div class="muted mb-3">
-      الأعمدة المطلوبة:
-      <code class="mx-1">control, site, department, location, pm_date, next_date, tech, name, brand, serial</code>
-      — التواريخ <b>YYYY-MM-DD</b>.
+    <!-- شريط أدوات مثل القديم -->
+    <div class="box p-4 md:p-5 mb-5">
+      <div class="grid md:grid-cols-12 gap-3 items-center">
+        <!-- أزرار التحميل -->
+        <div class="md:col-span-5 flex flex-wrap gap-2">
+          <button id="btnCsv"   type="button" class="btn btn-green">تحميل نموذج (CSV سريع)</button>
+          <button id="btnXls"   type="button" class="btn btn-blue">تحميل نموذج (Excel)</button>
+          <a id="csvDirect" download="pm_assets_template.csv" class="hidden"></a>
+        </div>
+
+        <!-- اختيار ملف -->
+        <div class="md:col-span-4 flex items-center gap-2">
+          <label class="pill cursor-pointer">
+            اختر ملف
+            <input id="file" type="file" accept=".xlsx,.xls,.csv">
+          </label>
+          <span id="fileName" class="muted text-sm"></span>
+        </div>
+
+        <!-- الكتابة فوق الموجود + رفع -->
+        <div class="md:col-span-3 flex items-center justify-end gap-2">
+          <label class="flex items-center gap-2 text-sm">
+            <input id="overwrite" type="checkbox" class="accent-sky-500" checked>
+            تفعيل كتابة فوق الموجود (قيمة كتابة)
+          </label>
+          <button id="btnUpload" type="button" class="btn btn-blue disabled:opacity-40" disabled>رفع للقاعدة</button>
+        </div>
+      </div>
+
+      <!-- ملاحظة صغيرة -->
+      <div class="mt-3 text-xs muted">
+        التواريخ بصيغة <b>YYYY-MM-DD</b>. لو ملف Excel فيه Serial Dates هيتم تحويلها تلقائيًا.
+      </div>
     </div>
 
-    <div id="stats" class="flex flex-wrap gap-2 items-center mb-2"></div>
-
-    <div class="overflow-auto max-h-[65vh] rounded-lg border border-slate-700">
+    <!-- إحصائيات + المعاينة -->
+    <div class="flex flex-wrap items-center gap-2 mb-2" id="stats"></div>
+    <div class="overflow-auto max-h-[65vh] rounded-xl border border-slate-700">
       <table id="preview"></table>
+    </div>
+
+    <!-- أزرار تحت الجدول (اختياري) -->
+    <div class="mt-4 flex flex-wrap gap-2">
+      <button id="btnClear" type="button" class="btn btn-rose">مسح المعاينة</button>
     </div>
   </div>
 </div>
 
-<!-- سكربت بسيط غير-Module لعلاج مشاكل التحميل -->
+<!-- منطق الواجهة (نفس سلوك النسخة القديمة مع تحسينات الثبات) -->
 <script>
-(function(){
+(()=> {
   const $ = s=>document.querySelector(s);
-  const notice = (msg,type='info')=>{
-    const n = $('#notice');
-    n.textContent = msg;
-    n.className = 'notice ' + (type==='ok'?'n-ok':type==='error'?'n-err':'n-info');
-  };
-
-  // 1) رابط CSV مباشر (بدون أي JS)
   const header = ["control","site","department","location","pm_date","next_date","tech","name","brand","serial"];
   const sample = [
-    ["AS-0001","الموقع A","قسم المختبر","غرفة 101","2025-01-15","2025-07-15","Ahmed","Infusion Pump","B Braun","SN12345"],
+    ["AS-0001","الموقع A","LAB","غرفة 101","2025-01-15","2025-07-15","Ahmed","Infusion Pump","B Braun","SN12345"],
     ["MT/AS/12","mobile","sada","","2025-09-25","2026-03-25","ahmed","","",""]
   ];
-  const toCSV = (arr)=>arr.map(row=>row.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const csvContent = toCSV([header, ...sample]);
-  const csvDataURL = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
-  const csvDirect = $('#csvDirect');
-  csvDirect.href = csvDataURL;
+  const toCSV = (arr)=>arr.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const csvData = 'data:text/csv;charset=utf-8,' + encodeURIComponent(toCSV([header,...sample]));
 
-  // 2) زر Excel/CSV (يشغّل Excel إن وُجدت مكتبة XLSX، وإلا ينزل CSV)
-  $('#btnTemplate').addEventListener('click', ()=>{
+  const notice = (msg,type='info')=>{
+    const n=$('#notice');
+    n.textContent=msg;
+    n.className='notice '+(type==='ok'?'n-ok':type==='error'?'n-err':'n-info');
+  };
+
+  // تنزيل CSV سريع
+  $('#btnCsv').onclick = ()=>{
+    const a = $('#csvDirect'); a.href = csvData; a.click();
+    notice('تم إنشاء نموذج CSV ✅','ok');
+  };
+
+  // تنزيل Excel (لو SheetJS متاحة وإلا CSV)
+  $('#btnXls').onclick = ()=>{
     try{
-      if (window.XLSX && XLSX.utils && XLSX.writeFile) {
-        const ws = XLSX.utils.aoa_to_sheet([header, ...sample]);
+      if(window.XLSX && XLSX.utils && XLSX.writeFile){
+        const ws = XLSX.utils.aoa_to_sheet([header,...sample]);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "assets_template");
-        XLSX.writeFile(wb, "pm_assets_template.xlsx");
-        notice('تم إنشاء ملف Excel ✅','ok');
-      } else {
-        // Fallback CSV
-        const a = document.createElement('a');
-        a.href = csvDataURL;
-        a.download = 'pm_assets_template.csv';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        notice('تم إنشاء ملف CSV ✅','ok');
+        XLSX.writeFile(wb,"pm_assets_template.xlsx");
+        notice('تم إنشاء نموذج Excel ✅','ok');
+      }else{
+        const a=document.createElement('a'); a.href=csvData; a.download='pm_assets_template.csv'; a.click();
+        notice('SheetJS غير متاحة — تم إنشاء CSV بدلاً من ذلك ✅','ok');
       }
-    }catch(e){
-      console.error(e);
-      notice('تعذّر إنشاء النموذج: ' + (e.message||''), 'error');
-    }
-  });
+    }catch(e){ notice('تعذر إنشاء النموذج: '+(e.message||''),'error'); }
+  };
 })();
 </script>
 
-<!-- بقية الصفحة: قراءة الملف & الرفع (نفس السابق) -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getFirestore, writeBatch, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-import * as XLSX_NS from "https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"; // للاستخدام داخل الموديول
+import * as XLSX_NS from "https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
@@ -127,150 +147,114 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-const $ = s => document.querySelector(s);
+const $ = s=>document.querySelector(s);
 const notice = (msg,type='info')=>{
-  const n = $('#notice');
-  n.textContent = msg;
-  n.className = 'notice ' + (type==='ok'?'n-ok':type==='error'?'n-err':'n-info');
+  const n=$('#notice'); n.textContent=msg; n.className='notice '+(type==='ok'?'n-ok':type==='error'?'n-err':'n-info');
 };
-const requiredCols = ["control","site","department","location","pm_date","next_date","tech","name","brand","serial"];
-let rows = [];
+const required = ["control","site","department","location","pm_date","next_date","tech","name","brand","serial"];
+let rows=[];
 
 $('#file').addEventListener('change', async (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  $('#fileName').textContent = file.name;
-  notice('جارِ قراءة الملف …');
-
+  const f = e.target.files[0]; if(!f) return;
+  $('#fileName').textContent = f.name;
+  notice('جارِ قراءة الملف…');
   try{
-    const ext = file.name.toLowerCase().split('.').pop();
-    const data = await file.arrayBuffer();
-
+    const ext = f.name.toLowerCase().split('.').pop();
+    const ab  = await f.arrayBuffer();
     let json = [];
-    if(ext === 'csv'){
-      const text = new TextDecoder('utf-8').decode(data);
-      json = csvToJson(text);
+    if(ext==='csv'){
+      json = csvToJson(new TextDecoder('utf-8').decode(ab));
     }else{
-      const XLSX = window.XLSX || XLSX_NS; // استخدم أي واحد متاح
-      const wb = XLSX.read(data, {type:'array'});
+      const XLSX = window.XLSX || XLSX_NS;
+      const wb = XLSX.read(ab,{type:'array'});
       const ws = wb.Sheets[wb.SheetNames[0]];
-      json = XLSX.utils.sheet_to_json(ws, {defval:""});
+      json = XLSX.utils.sheet_to_json(ws,{defval:""});
     }
-
-    if(json.length===0){ rows=[]; draw([],[]); notice('الملف فارغ','error'); $('#btnUpload').disabled=true; return; }
-
+    if(json.length===0){ rows=[]; draw([],[]); $('#btnUpload').disabled=true; notice('الملف فارغ','error'); return; }
     const cols = Object.keys(json[0]).map(c=>c.trim());
-    const missing = requiredCols.filter(c=>!cols.includes(c));
-    if(missing.length){ rows=[]; draw([],[]); notice('أعمدة ناقصة: '+missing.join(', '),'error'); $('#btnUpload').disabled=true; return; }
+    const miss = required.filter(c=>!cols.includes(c));
+    if(miss.length){ rows=[]; draw([],[]); $('#btnUpload').disabled=true; notice('أعمدة ناقصة: '+miss.join(', '),'error'); return; }
 
     rows = json.map(r=>{
-      const out = {};
-      requiredCols.forEach(c=> out[c] = (r[c]??"").toString().trim());
-      const fixDate = v=>{
-        if(!v) return "";
-        // Excel serial number
-        const isNum = /^\d+(\.\d+)?$/.test(v);
-        if(isNum){
-          try{
-            const XLSX = window.XLSX || XLSX_NS;
-            return XLSX.SSF.format("yyyy-mm-dd", Number(v));
-          }catch{return ""}
-        }
-        const d = new Date(v);
-        return isNaN(d) ? v : d.toISOString().slice(0,10);
+      const o={}; required.forEach(c=>o[c]=(r[c]??'').toString().trim());
+      const fix=(v)=>{ if(!v) return ""; const n=/^\d+(\.\d+)?$/.test(v);
+        if(n){ try{ const X=window.XLSX||XLSX_NS; return X.SSF.format("yyyy-mm-dd",Number(v)); }catch{return ""} }
+        const d=new Date(v); return isNaN(d)?v:d.toISOString().slice(0,10);
       };
-      out.pm_date   = fixDate(out.pm_date);
-      out.next_date = fixDate(out.next_date);
-      return out;
+      o.pm_date=fix(o.pm_date); o.next_date=fix(o.next_date); return o;
     });
-
-    draw(requiredCols, rows);
-    $('#btnUpload').disabled = rows.length===0;
+    draw(required, rows);
+    $('#btnUpload').disabled=false;
     notice(`تمت المعاينة: ${rows.length} صفًا ✅`,'ok');
-  }catch(err){
-    console.error(err);
-    rows=[]; draw([],[]);
-    notice('فشل قراءة الملف: ' + (err.message||''), 'error');
-    $('#btnUpload').disabled=true;
-  }
+  }catch(err){ console.error(err); rows=[]; draw([],[]); $('#btnUpload').disabled=true; notice('فشل قراءة الملف: '+(err.message||''),'error'); }
 });
 
-function csvToJson(text){
-  const lines = text.replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
-  if(lines.length===0) return [];
-  const header = splitCSVLine(lines[0]).map(h=>h.trim());
-  return lines.slice(1).map(line=>{
-    const cells = splitCSVLine(line);
-    const obj = {};
-    header.forEach((h,i)=> obj[h] = (cells[i]??'').trim());
-    return obj;
-  });
-}
-function splitCSVLine(line){
-  const out=[]; let cur=''; let q=false;
-  for(let i=0;i<line.length;i++){
-    const ch=line[i];
-    if(ch==='"'){ if(q && line[i+1]==='"'){cur+='"'; i++;} else {q=!q;} }
-    else if(ch===',' && !q){ out.push(cur); cur='';}
-    else{ cur+=ch; }
-  }
-  out.push(cur);
-  return out;
-}
-function draw(cols, data){
-  const table = $('#preview');
-  if(!cols.length){ table.innerHTML=''; $('#stats').innerHTML=''; return; }
-  const thead = `<thead><tr>${cols.map(c=>`<th class="text-right">${c}</th>`).join('')}</tr></thead>`;
-  const tbody = `<tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${escapeHtml(r[c]||'')}</td>`).join('')}</tr>`).join('')}</tbody>`;
-  table.innerHTML = thead + tbody;
+$('#btnClear').onclick = ()=>{ rows=[]; draw([],[]); $('#file').value=""; $('#fileName').textContent=""; $('#btnUpload').disabled=true; };
 
-  const invalidDates = data.filter(r=> (r.pm_date && !/^\d{4}-\d{2}-\d{2}$/.test(r.pm_date)) || (r.next_date && !/^\d{4}-\d{2}-\d{2}$/.test(r.next_date))).length;
-  $('#stats').innerHTML = `
-    <span class="pill">الصفوف: ${data.length}</span>
-    <span class="pill">تواريخ غير منسقة: ${invalidDates}</span>
-    <span class="pill">أعمدة: ${cols.length}</span>
-  `;
-}
-function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
-
-$('#btnUpload').addEventListener('click', uploadBatch);
-async function uploadBatch(){
+$('#btnUpload').onclick = async ()=>{
   if(!rows.length) return;
-  if(!confirm(`سيتم رفع ${rows.length} صفًا. متابعة؟`)) return;
-
+  const overwrite = $('#overwrite').checked;
+  if(!confirm(`سيتم رفع ${rows.length} صفًا${overwrite?' (مع الكتابة فوق الموجود)':''}. متابعة؟`)) return;
+  notice('جارِ الرفع…');
   $('#btnUpload').disabled=true;
-  notice('جارِ الرفع …');
 
-  const { writeBatch, doc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js");
-  const chunk = 480;
-  let done=0, failed=0;
-  const sanitizeId = s=> s.toString().trim().replace(/[\/#?\s]/g,'-');
+  const chunk = 60; let ok=0, fail=0;
+  const idSafe = s=> s.toString().trim().replace(/[\/#?\s]/g,'-');
 
   try{
     for(let i=0;i<rows.length;i+=chunk){
       const part = rows.slice(i,i+chunk);
       const batch = writeBatch(db);
       part.forEach(r=>{
-        const id = sanitizeId(r.control||'');
-        if(!id){ failed++; return; }
-        batch.set(doc(db,'assets', id), {
+        const id = idSafe(r.control||'');
+        if(!id){ fail++; return; }
+        const data = {
           control:r.control||'', site:r.site||'', department:r.department||'',
           location:r.location||'', pm_date:r.pm_date||'', next_date:r.next_date||'',
           tech:r.tech||'', name:r.name||'', brand:r.brand||'', serial:r.serial||'',
           updatedAt: serverTimestamp()
-        }, {merge:true});
+        };
+        batch.set(doc(db,'assets',id), data, { merge: overwrite });
       });
       await batch.commit();
-      done += part.length;
-      notice(`تم رفع ${done}/${rows.length} …`);
+      ok += part.length;
+      notice(`تم رفع ${ok}/${rows.length}…`);
     }
-    notice(`اكتمل الرفع ✅ تم: ${done} — فشل: ${failed}`,'ok');
-  }catch(err){
-    console.error(err);
-    notice('فشل الرفع: ' + (err.message||''),'error');
-  }finally{
-    $('#btnUpload').disabled=false;
+    notice(`اكتمل الرفع ✅ تم: ${ok} — فشل: ${fail}`,'ok');
+  }catch(err){ console.error(err); notice('فشل الرفع: '+(err.message||''),'error'); }
+  finally{ $('#btnUpload').disabled=false; }
+};
+
+function draw(cols, data){
+  const t = $('#preview');
+  if(!cols.length){ t.innerHTML=''; $('#stats').innerHTML=''; return; }
+  const thead=`<thead><tr>${cols.map(c=>`<th class="text-right">${c}</th>`).join('')}</tr></thead>`;
+  const tbody=`<tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${esc(r[c]||'')}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  t.innerHTML = thead+tbody;
+
+  const invalid = data.filter(r=>(r.pm_date && !/^\d{4}-\d{2}-\d{2}$/.test(r.pm_date)) || (r.next_date && !/^\d{4}-\d{2}-\d{2}$/.test(r.next_date))).length;
+  $('#stats').innerHTML = `
+    <span class="pill">الصفوف: ${data.length}</span>
+    <span class="pill">تواريخ غير منسقة: ${invalid}</span>
+    <span class="pill">أعمدة: ${cols.length}</span>
+  `;
+}
+function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);}
+function csvToJson(text){
+  const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
+  if(!lines.length) return [];
+  const head=split(lines[0]).map(h=>h.trim());
+  return lines.slice(1).map(line=>{ const c=split(line); const o={}; head.forEach((h,i)=>o[h]=(c[i]??'').trim()); return o; });
+}
+function split(line){
+  const out=[]; let cur=''; let q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){ if(q && line[i+1]==='"'){cur+='"'; i++;} else q=!q; }
+    else if(ch===',' && !q){ out.push(cur); cur='';}
+    else cur+=ch;
   }
+  out.push(cur); return out;
 }
 </script>
 </body>
