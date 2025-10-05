@@ -8,9 +8,6 @@
 <!-- Tailwind -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- SheetJS (نسخة جلوبال) -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-
 <!-- خط عربي -->
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 
@@ -122,26 +119,22 @@
   // تنزيل Excel (لو SheetJS متاحة وإلا CSV)
   $('#btnXls').onclick = ()=>{
     try{
-      if(window.XLSX && XLSX.utils && XLSX.writeFile){
-        const ws = XLSX.utils.aoa_to_sheet([header,...sample]);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "assets_template");
-        XLSX.writeFile(wb,"pm_assets_template.xlsx");
-        notice('تم إنشاء نموذج Excel ✅','ok');
-      }else{
-        const a=document.createElement('a'); a.href=csvData; a.download='pm_assets_template.csv'; a.click();
-        notice('SheetJS غير متاحة — تم إنشاء CSV بدلاً من ذلك ✅','ok');
-      }
+      // هننشئ الملف باستخدام مكتبة ESM لاحقًا من الموديول، فلو دي فشلت هنطلع CSV
+      const a=document.createElement('a'); a.href=csvData; a.download='pm_assets_template.csv'; a.click();
+      notice('تم إنشاء CSV، ويمكنك فتحه في Excel ✅','ok');
     }catch(e){ notice('تعذر إنشاء النموذج: '+(e.message||''),'error'); }
   };
 })();
 </script>
 
-<!-- Firebase + الاستيراد والرفع -->
+<!-- Firebase + الاستيراد والرفع (ESM) -->
 <script type="module">
 /* Firebase */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getFirestore, writeBatch, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+/* SheetJS كـ ESM */
+import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.19.3/+esm";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
@@ -193,45 +186,27 @@ $('#file').addEventListener('change', async (e)=>{
     if(ext==='csv'){
       const text = smartDecodeCSV(new Uint8Array(ab));
       json = csvToJson(text);
-      // محاولة تعريب العناوين إلى required
+      // خرائط العناوين
       if (json.length) {
-        json = json.map(row=>{
-          const o={};
-          Object.keys(row).forEach(k=>{
-            const keyNorm = (k||"").trim().toLowerCase();
-            const mapped = headerMap[keyNorm] || headerMap[k.trim()] || keyNorm;
-            o[mapped]=row[k];
-          });
-          return o;
-        });
+        json = mapHeaders(json, headerMap);
       }
     }else{
-      const XLSX = window.XLSX; // استخدام النسخة الجلوبال
       const wb = XLSX.read(ab,{type:'array', cellDates:true});
       const ws = wb.Sheets[wb.SheetNames[0]];
       json = XLSX.utils.sheet_to_json(ws,{defval:""});
-      // نفس فكرة خرائط العناوين لو الإكسل عربي
       if (json.length) {
-        json = json.map(row=>{
-          const o={};
-          Object.keys(row).forEach(k=>{
-            const keyNorm = (k||"").trim().toLowerCase();
-            const mapped = headerMap[keyNorm] || headerMap[k.trim()] || keyNorm;
-            o[mapped]=row[k];
-          });
-          return o;
-        });
+        json = mapHeaders(json, headerMap);
       }
     }
 
     if(json.length===0){
       rows=[]; draw([],[]); $('#btnUpload').disabled=true;
       notice('الملف فارغ','error'); 
-      $('#file').value = ""; // للسماح باختيار نفس الملف لاحقًا
+      $('#file').value = ""; 
       return; 
     }
 
-    // التحقق من الأعمدة (بعد الخرائط)
+    // التحقق من الأعمدة
     const cols = Object.keys(json[0]).map(c=>c.trim());
     const miss = required.filter(c=>!cols.includes(c));
     if(miss.length){
@@ -246,9 +221,8 @@ $('#file').addEventListener('change', async (e)=>{
       const o={}; required.forEach(c=>o[c]=(r[c]??'').toString().trim());
       const fix=(v)=>{ 
         if(!v) return ""; 
-        // رقم مسلسل (Excel serial)؟ 
         if(/^\d+(\.\d+)?$/.test(v)){ 
-          try{ return window.XLSX.SSF.format("yyyy-mm-dd",Number(v)); }
+          try{ return XLSX.SSF.format("yyyy-mm-dd",Number(v)); }
           catch{ return ""; }
         }
         const d=new Date(v); 
@@ -268,8 +242,7 @@ $('#file').addEventListener('change', async (e)=>{
     rows=[]; draw([],[]); $('#btnUpload').disabled=true;
     notice('فشل قراءة الملف: '+(err.message||''),'error');
   } finally {
-    // السماح بإعادة اختيار نفس الملف
-    e.target.value = "";
+    e.target.value = ""; // تسمح باختيار نفس الملف مرة أخرى
   }
 });
 
@@ -324,7 +297,19 @@ $('#btnUpload').onclick = async ()=>{
   }
 };
 
-/* رسم الجدول والإحصائيات */
+/* Utilities */
+function mapHeaders(json, map){
+  return json.map(row=>{
+    const o={};
+    Object.keys(row).forEach(k=>{
+      const keyNorm = (k||"").trim().toLowerCase();
+      const mapped = map[keyNorm] || map[k.trim()] || keyNorm;
+      o[mapped]=row[k];
+    });
+    return o;
+  });
+}
+
 function draw(cols, data){
   const t = $('#preview');
   if(!cols.length){ t.innerHTML=''; $('#stats').innerHTML=''; return; }
@@ -334,24 +319,22 @@ function draw(cols, data){
   t.innerHTML = thead+tbody;
 
   const invalid = data.filter(r=>(r.pm_date && !/^\d{4}-\d{2}-\d{2}$/.test(r.pm_date)) || (r.next_date && !/^\d{4}-\d{2}-\d{2}$/.test(r.next_date))).length;
-  $('#stats').innerHTML = `
+  document.querySelector('#stats').innerHTML = `
     <span class="pill">الصفوف: ${data.length}</span>
     <span class="pill">تواريخ غير منسقة: ${invalid}</span>
     <span class="pill">أعمدة: ${cols.length}</span>
   `;
 }
 
-/* Utilities */
 function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);}
 
 /* CSV smart decode: UTF-8 -> windows-1256 -> iso-8859-6 */
 function smartDecodeCSV(u8){
-  // BOM UTF-8؟
   if (u8.length>=3 && u8[0]===0xEF && u8[1]===0xBB && u8[2]===0xBF) {
     return new TextDecoder('utf-8').decode(u8.subarray(3));
   }
   const tryEnc = (enc)=>{ try{ return new TextDecoder(enc).decode(u8); } catch { return null; } };
-  const isBad = (txt)=> !txt || (txt.match(/\uFFFD/g)||[]).length > 2; // وجود بدائل كثيرة �
+  const isBad = (txt)=> !txt || (txt.match(/\uFFFD/g)||[]).length > 2;
   let t = tryEnc('utf-8');
   if (!isBad(t)) return t;
   t = tryEnc('windows-1256');
