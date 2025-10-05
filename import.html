@@ -4,9 +4,13 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>استيراد الأصول إلى Firestore • PPM TABUK</title>
+
+<!-- Tailwind -->
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- SheetJS (لإنشاء/قراءة Excel إذا توفرت) -->
+
+<!-- SheetJS (نسخة جلوبال) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+
 <style>
   body{background:#0b1220}
   .shell{max-width:1200px;margin-inline:auto;padding:18px}
@@ -37,14 +41,14 @@
 <div class="shell">
   <div class="panel p-4 md:p-6">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
-      <div class="title text-2xl">Firestore إلى استيراد الأصول</div>
-      <div class="text-sm muted">Control Number، Site، Department، Location، PM Date، Next Date، Technician، Name، Brand، Serial</div>
+      <div class="title text-2xl">استيراد الأصول إلى Firestore</div>
+      <div class="text-sm muted">control, site, department, location, pm_date, next_date, tech, name, brand, serial</div>
     </div>
 
-    <!-- شريط أدوات مثل القديم -->
+    <!-- شريط أدوات -->
     <div class="box p-4 md:p-5 mb-5">
       <div class="grid md:grid-cols-12 gap-3 items-center">
-        <!-- أزرار التحميل -->
+        <!-- أزرار تحميل النماذج -->
         <div class="md:col-span-5 flex flex-wrap gap-2">
           <button id="btnCsv"   type="button" class="btn btn-green">تحميل نموذج (CSV سريع)</button>
           <button id="btnXls"   type="button" class="btn btn-blue">تحميل نموذج (Excel)</button>
@@ -53,10 +57,8 @@
 
         <!-- اختيار ملف -->
         <div class="md:col-span-4 flex items-center gap-2">
-          <label class="pill cursor-pointer">
-            اختر ملف
-            <input id="file" type="file" accept=".xlsx,.xls,.csv">
-          </label>
+          <label for="file" class="pill cursor-pointer">اختر ملف</label>
+          <input id="file" type="file" accept=".xlsx,.xls,.csv">
           <span id="fileName" class="muted text-sm"></span>
         </div>
 
@@ -64,7 +66,7 @@
         <div class="md:col-span-3 flex items-center justify-end gap-2">
           <label class="flex items-center gap-2 text-sm">
             <input id="overwrite" type="checkbox" class="accent-sky-500" checked>
-            تفعيل كتابة فوق الموجود (قيمة كتابة)
+            تفعيل كتابة فوق الموجود
           </label>
           <button id="btnUpload" type="button" class="btn btn-blue disabled:opacity-40" disabled>رفع للقاعدة</button>
         </div>
@@ -82,14 +84,14 @@
       <table id="preview"></table>
     </div>
 
-    <!-- أزرار تحت الجدول (اختياري) -->
+    <!-- أزرار تحت الجدول -->
     <div class="mt-4 flex flex-wrap gap-2">
       <button id="btnClear" type="button" class="btn btn-rose">مسح المعاينة</button>
     </div>
   </div>
 </div>
 
-<!-- منطق الواجهة (نفس سلوك النسخة القديمة مع تحسينات الثبات) -->
+<!-- منطق الواجهة (أزرار النماذج) -->
 <script>
 (()=> {
   const $ = s=>document.querySelector(s);
@@ -131,10 +133,11 @@
 })();
 </script>
 
+<!-- Firebase + الاستيراد والرفع -->
 <script type="module">
+/* Firebase */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getFirestore, writeBatch, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-import * as XLSX_NS from "https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
@@ -147,6 +150,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
+/* Helpers */
 const $ = s=>document.querySelector(s);
 const notice = (msg,type='info')=>{
   const n=$('#notice'); n.textContent=msg; n.className='notice '+(type==='ok'?'n-ok':type==='error'?'n-err':'n-info');
@@ -154,48 +158,93 @@ const notice = (msg,type='info')=>{
 const required = ["control","site","department","location","pm_date","next_date","tech","name","brand","serial"];
 let rows=[];
 
+/* حدث اختيار الملف */
 $('#file').addEventListener('change', async (e)=>{
-  const f = e.target.files[0]; if(!f) return;
+  const f = e.target.files[0]; 
+  if(!f) return;
+
+  // عرض الاسم
   $('#fileName').textContent = f.name;
   notice('جارِ قراءة الملف…');
+
   try{
     const ext = f.name.toLowerCase().split('.').pop();
     const ab  = await f.arrayBuffer();
     let json = [];
+
     if(ext==='csv'){
       json = csvToJson(new TextDecoder('utf-8').decode(ab));
     }else{
-      const XLSX = window.XLSX || XLSX_NS;
+      const XLSX = window.XLSX; // استخدام النسخة الجلوبال
       const wb = XLSX.read(ab,{type:'array'});
       const ws = wb.Sheets[wb.SheetNames[0]];
       json = XLSX.utils.sheet_to_json(ws,{defval:""});
     }
-    if(json.length===0){ rows=[]; draw([],[]); $('#btnUpload').disabled=true; notice('الملف فارغ','error'); return; }
+
+    if(json.length===0){
+      rows=[]; draw([],[]); $('#btnUpload').disabled=true;
+      notice('الملف فارغ','error'); 
+      $('#file').value = ""; // للسماح باختيار نفس الملف لاحقًا
+      return; 
+    }
+
     const cols = Object.keys(json[0]).map(c=>c.trim());
     const miss = required.filter(c=>!cols.includes(c));
-    if(miss.length){ rows=[]; draw([],[]); $('#btnUpload').disabled=true; notice('أعمدة ناقصة: '+miss.join(', '),'error'); return; }
+    if(miss.length){
+      rows=[]; draw([],[]); $('#btnUpload').disabled=true;
+      notice('أعمدة ناقصة: '+miss.join(', '),'error');
+      $('#file').value = "";
+      return;
+    }
 
+    // تجهيز الصفوف وتحويل التواريخ
     rows = json.map(r=>{
       const o={}; required.forEach(c=>o[c]=(r[c]??'').toString().trim());
-      const fix=(v)=>{ if(!v) return ""; const n=/^\d+(\.\d+)?$/.test(v);
-        if(n){ try{ const X=window.XLSX||XLSX_NS; return X.SSF.format("yyyy-mm-dd",Number(v)); }catch{return ""} }
-        const d=new Date(v); return isNaN(d)?v:d.toISOString().slice(0,10);
+      const fix=(v)=>{ 
+        if(!v) return ""; 
+        const looksNumeric=/^\d+(\.\d+)?$/.test(v);
+        if(looksNumeric){ 
+          try{ return window.XLSX.SSF.format("yyyy-mm-dd",Number(v)); }
+          catch{ return ""; }
+        }
+        const d=new Date(v); 
+        return isNaN(d)?v:d.toISOString().slice(0,10);
       };
-      o.pm_date=fix(o.pm_date); o.next_date=fix(o.next_date); return o;
+      o.pm_date=fix(o.pm_date); 
+      o.next_date=fix(o.next_date); 
+      return o;
     });
+
     draw(required, rows);
     $('#btnUpload').disabled=false;
     notice(`تمت المعاينة: ${rows.length} صفًا ✅`,'ok');
-  }catch(err){ console.error(err); rows=[]; draw([],[]); $('#btnUpload').disabled=true; notice('فشل قراءة الملف: '+(err.message||''),'error'); }
+
+  }catch(err){
+    console.error(err); 
+    rows=[]; draw([],[]); $('#btnUpload').disabled=true;
+    notice('فشل قراءة الملف: '+(err.message||''),'error');
+  } finally {
+    // السماح بإعادة اختيار نفس الملف
+    e.target.value = "";
+  }
 });
 
-$('#btnClear').onclick = ()=>{ rows=[]; draw([],[]); $('#file').value=""; $('#fileName').textContent=""; $('#btnUpload').disabled=true; };
+/* مسح المعاينة */
+$('#btnClear').onclick = ()=>{
+  rows=[]; draw([],[]); 
+  $('#file').value=""; 
+  $('#fileName').textContent=""; 
+  $('#btnUpload').disabled=true; 
+  notice('تم مسح المعاينة','info');
+};
 
+/* رفع للفايرستور */
 $('#btnUpload').onclick = async ()=>{
   if(!rows.length) return;
   const overwrite = $('#overwrite').checked;
   if(!confirm(`سيتم رفع ${rows.length} صفًا${overwrite?' (مع الكتابة فوق الموجود)':''}. متابعة؟`)) return;
-  notice('جارِ الرفع…');
+
+  notice('جارِ الرفع…'); 
   $('#btnUpload').disabled=true;
 
   const chunk = 60; let ok=0, fail=0;
@@ -205,6 +254,7 @@ $('#btnUpload').onclick = async ()=>{
     for(let i=0;i<rows.length;i+=chunk){
       const part = rows.slice(i,i+chunk);
       const batch = writeBatch(db);
+
       part.forEach(r=>{
         const id = idSafe(r.control||'');
         if(!id){ fail++; return; }
@@ -216,18 +266,25 @@ $('#btnUpload').onclick = async ()=>{
         };
         batch.set(doc(db,'assets',id), data, { merge: overwrite });
       });
+
       await batch.commit();
       ok += part.length;
       notice(`تم رفع ${ok}/${rows.length}…`);
     }
     notice(`اكتمل الرفع ✅ تم: ${ok} — فشل: ${fail}`,'ok');
-  }catch(err){ console.error(err); notice('فشل الرفع: '+(err.message||''),'error'); }
-  finally{ $('#btnUpload').disabled=false; }
+  }catch(err){
+    console.error(err); 
+    notice('فشل الرفع: '+(err.message||''),'error');
+  } finally {
+    $('#btnUpload').disabled=false;
+  }
 };
 
+/* رسم الجدول والإحصائيات */
 function draw(cols, data){
   const t = $('#preview');
   if(!cols.length){ t.innerHTML=''; $('#stats').innerHTML=''; return; }
+
   const thead=`<thead><tr>${cols.map(c=>`<th class="text-right">${c}</th>`).join('')}</tr></thead>`;
   const tbody=`<tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${esc(r[c]||'')}</td>`).join('')}</tr>`).join('')}</tbody>`;
   t.innerHTML = thead+tbody;
@@ -239,14 +296,20 @@ function draw(cols, data){
     <span class="pill">أعمدة: ${cols.length}</span>
   `;
 }
+
+/* Utilities */
 function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);}
 function csvToJson(text){
   const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
   if(!lines.length) return [];
-  const head=split(lines[0]).map(h=>h.trim());
-  return lines.slice(1).map(line=>{ const c=split(line); const o={}; head.forEach((h,i)=>o[h]=(c[i]??'').trim()); return o; });
+  const head=splitCSV(lines[0]).map(h=>h.trim());
+  return lines.slice(1).map(line=>{
+    const c=splitCSV(line); 
+    const o={}; head.forEach((h,i)=>o[h]=(c[i]??'').trim()); 
+    return o; 
+  });
 }
-function split(line){
+function splitCSV(line){
   const out=[]; let cur=''; let q=false;
   for(let i=0;i<line.length;i++){
     const ch=line[i];
