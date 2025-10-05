@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PM-QR — طباعة أكواد QR</title>
+<title>PM-QR — طباعة أكواد QR (Zebra 50×25mm)</title>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
@@ -11,39 +11,51 @@
   :root{ --line:#e5e7eb; --ink:#0f172a; }
   body{background:#f8fafc;color:var(--ink)}
   .card{border:1px solid var(--line);background:#fff;border-radius:10px}
+  .hide{display:none!important}
 
-  /* ===== وضع مفرد: ورقة بمقاس فعلي ===== */
+  /* ===== ورقة اللصّاقة: 50×25 مم ===== */
   .sheet{
     background:#fff; color:#000;
     box-shadow:0 10px 30px rgba(0,0,0,.08);
     margin:16px auto; position:relative; overflow:hidden;
+    width:50mm; height:25mm;   /* المقاس الفعلي */
   }
-  .qr-wrap{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center }
-  .qr-wrap img{ display:block; object-fit:contain }
-  .qr-title{ font-weight:900; text-align:center }
-  .control-text{ font-weight:800; text-align:center }
+  .qr-wrap{
+    position:absolute; inset:0; display:flex;
+    flex-direction:column; align-items:center; justify-content:center;
+  }
+  .qr-title{ font-weight:800; text-align:center; line-height:1 }
+  .control-text{
+    font-weight:900; text-align:center; line-height:1.05;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    letter-spacing: .3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 100%;
+  }
 
-  /* ===== وضع القسم: شبكة بطاقات ===== */
+  /* شبكة البطاقات (لو حبيت تطبع قسم على ورق عادي) */
   .qr-card{ width:58mm; padding:6mm; text-align:center; page-break-inside:avoid; border:1px solid var(--line); border-radius:8px; background:#fff }
-  .qr-img{ width:48mm; height:48mm; object-fit:contain; display:block; margin:0 auto 6mm auto }
+  .qr-img{ object-fit:contain; display:block; margin:0 auto 6mm auto }
   .qr-control{ font-weight:800; font-size:14px; letter-spacing:.5px }
   .grid-print{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8mm }
 
+  /* طباعة */
   @media print{
     .no-print{display:none !important}
     body{background:#fff}
     .sheet{box-shadow:none;margin:0 auto}
-    .grid-print{gap:6mm}
   }
+  /* مقاس الصفحة عند الطباعة */
+  @page{ size:50mm 25mm; margin:0 }
 </style>
 </head>
 <body>
 <header class="no-print sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200">
   <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-    <h1 class="font-extrabold text-lg">طباعة أكواد QR</h1>
+    <h1 class="font-extrabold text-lg">طباعة أكواد QR — Zebra 50×25mm</h1>
     <div class="flex items-center gap-2">
       <button id="btnPrint" class="px-3 py-2 rounded bg-sky-600 text-white font-bold">🖨️ طباعة</button>
-      <a href="index.html" class="px-3 py-2 rounded border border-slate-200">↩︎ الرجوع للوحة</a>
+      <a href="index.html" class="px-3 py-2 rounded border border-slate-200">↩︎ الرجوع</a>
     </div>
   </div>
 </header>
@@ -52,372 +64,200 @@
   <!-- تنبيهات -->
   <div id="notice" class="no-print mb-4 hidden p-3 rounded border text-sm"></div>
 
-  <!-- أوضاع الطباعة -->
+  <!-- إعدادات سريعة -->
   <section class="no-print card p-4 mb-4">
-    <div class="grid md:grid-cols-3 gap-4">
+    <div class="grid md:grid-cols-4 gap-4">
+      <div class="md:col-span-2">
+        <label class="block text-sm text-slate-600 mb-1">Control Number</label>
+        <input id="singleControl" class="w-full px-3 py-2 border rounded" placeholder="مثال: AS-0001"/>
+      </div>
+
       <div>
-        <label class="block text-sm text-slate-600 mb-1">الوضع</label>
-        <select id="mode" class="w-full px-3 py-2 border rounded">
-          <option value="single" selected>مفرد (QR واحد)</option>
-          <option value="dept">قسم كامل</option>
+        <label class="block text-sm text-slate-600 mb-1">Preset</label>
+        <div class="flex gap-2 flex-wrap">
+          <button class="px-2 py-1 rounded border" id="presetZebra">Zebra 50×25mm</button>
+          <button class="px-2 py-1 rounded border" id="presetBig">A4 عرضي (اختبار)</button>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">طباعة تلقائية</label>
+        <select id="autoSel" class="w-full px-3 py-2 border rounded">
+          <option value="0" selected>لا</option>
+          <option value="1">نعم</option>
         </select>
-      </div>
-
-      <!-- مفرد -->
-      <div id="singleControls" class="grid grid-cols-1 gap-3">
-        <div>
-          <label class="block text-sm text-slate-600 mb-1">Control Number</label>
-          <input id="singleControl" class="w-full px-3 py-2 border rounded" placeholder="مثال: AS-0001"/>
-        </div>
-      </div>
-
-      <!-- قسم كامل -->
-      <div id="deptControls" class="hidden grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-sm text-slate-600 mb-1">الموقع</label>
-          <select id="siteSel" class="w-full px-3 py-2 border rounded"><option value="">— اختر —</option></select>
-        </div>
-        <div>
-          <label class="block text-sm text-slate-600 mb-1">القسم</label>
-          <select id="deptSel" class="w-full px-3 py-2 border rounded"><option value="">— اختر —</option></select>
-        </div>
       </div>
     </div>
 
     <hr class="my-4">
 
-    <!-- إعدادات المفرد -->
-    <div id="singleSettings" class="grid md:grid-cols-5 gap-4">
+    <div class="grid md:grid-cols-5 gap-4">
       <div>
-        <label class="block text-slate-600 text-sm mb-1">مقاس الورقة (سم) — افتراضي A4</label>
-        <div class="flex gap-2">
-          <input id="wcm" type="number" step="0.1" class="w-24 px-2 py-2 border rounded" value="21">
-          <span class="self-center">×</span>
-          <input id="hcm" type="number" step="0.1" class="w-24 px-2 py-2 border rounded" value="29.7">
-        </div>
-        <div class="flex flex-wrap gap-2 mt-2">
-          <button class="px-2 py-1 rounded border" data-preset="21x29.7">A4 طولي</button>
-          <button class="px-2 py-1 rounded border" data-preset="29.7x21">A4 عرضي</button>
-          <button class="px-2 py-1 rounded border" data-preset="6x4">6×4 سم</button>
-          <button class="px-2 py-1 rounded border" data-preset="30x20">30×20</button>
-          <button class="px-2 py-1 rounded border" data-preset="10x10">10×10</button>
-        </div>
+        <label class="block text-slate-600 text-sm mb-1">حجم QR (مم)</label>
+        <input id="qrMM" type="number" class="w-28 px-2 py-2 border rounded" value="18">
+        <div class="text-xs text-slate-500 mt-1">الافتراضي 18mm للمقاس 50×25</div>
       </div>
 
       <div>
-        <label class="block text-slate-600 text-sm mb-1">حجم QR كنسبة من العرض</label>
-        <input id="qrPct" type="number" class="w-24 px-2 py-2 border rounded" value="60">
-        <div class="text-xs text-slate-500 mt-1">مثال: 60% من عرض الصفحة</div>
+        <label class="block text-slate-600 text-sm mb-1">هوامش داخلية (مم)</label>
+        <input id="padMM" type="number" class="w-28 px-2 py-2 border rounded" value="2">
+        <div class="text-xs text-slate-500 mt-1">زيرو تقريبًا لزebra، لكن 2mm آمن</div>
       </div>
 
       <div>
-        <label class="block text-slate-600 text-sm mb-1">حجم خط العنوان (pt)</label>
-        <input id="titlePt" type="number" class="w-24 px-2 py-2 border rounded" value="20">
+        <label class="block text-slate-600 text-sm mb-1">عنوان أعلى (pt)</label>
+        <input id="titlePt" type="number" class="w-24 px-2 py-2 border rounded" value="9">
       </div>
 
       <div>
-        <label class="block text-slate-600 text-sm mb-1">حجم خط الـControl (pt)</label>
-        <input id="fontPt" type="number" class="w-24 px-2 py-2 border rounded" value="16">
-      </div>
-
-      <div>
-        <label class="block text-slate-600 text-sm mb-1">هوامش داخلية (سم)</label>
-        <input id="padcm" type="number" step="0.1" class="w-24 px-2 py-2 border rounded" value="1.5">
-        <div class="text-xs text-slate-500 mt-1">عند 6×4 سم يفضل 0.3 سم</div>
+        <label class="block text-slate-600 text-sm mb-1">حجم الـControl (pt)</label>
+        <input id="ctrlPt" type="number" class="w-24 px-2 py-2 border rounded" value="9">
       </div>
 
       <div class="flex items-end">
-        <button id="apply" class="px-3 py-2 rounded bg-emerald-600 text-white font-bold">تطبيق الإعدادات</button>
-      </div>
-    </div>
-
-    <!-- إعدادات القسم -->
-    <div id="deptSettings" class="hidden grid md:grid-cols-3 gap-4 mt-4">
-      <div>
-        <label class="block text-sm text-slate-600 mb-1">حجم بطاقات QR</label>
-        <select id="qrSize" class="w-40 px-3 py-2 border rounded">
-          <option value="sm">صغير (40mm)</option>
-          <option value="md" selected>متوسط (48mm)</option>
-          <option value="lg">كبير (56mm)</option>
-        </select>
-      </div>
-      <div class="flex items-end">
-        <button id="loadDept" class="px-3 py-2 rounded bg-slate-800 text-white">تحميل القسم</button>
+        <button id="apply" class="px-3 py-2 rounded bg-emerald-600 text-white font-bold">تطبيق</button>
       </div>
     </div>
 
     <div class="mt-3 text-slate-500 text-sm no-print">
-      عند الطباعة في وضع المفرد: اختر <b>Scale = 100%</b> و <b>Margins = None</b> للحصول على المقاس الفعلي.
+      عند الطباعة على تعريف طابعة Zebra من Chrome: اختَر <b>Scale = 100%</b> و <b>Margins = None</b> و <b>Disable Headers/Footers</b>.  
+      المقاس مضبوط بـ <code>@page 50mm × 25mm</code> فلا تغيّر حجم الورق من التعريف لو كان يطابق المقاس.
     </div>
   </section>
 
-  <!-- مفرد: ورقة الطباعة -->
-  <section id="canvasArea" class="sheet" style="width:21cm; height:29.7cm;">
-    <div class="qr-wrap" id="qrWrap" style="padding:1.5cm">
-      <div id="qrTitle" class="qr-title" style="font-size:20pt; margin-bottom:0.6cm;">الصيانة الوقائية</div>
-      <img id="qrImg" alt="QR" style="max-width:100%; max-height:100%;">
-      <div id="ctrl" class="control-text" style="margin-top:0.6cm; font-size:16pt;">—</div>
+  <!-- ورقة اللصّاقة -->
+  <section id="canvasArea" class="sheet">
+    <div class="qr-wrap" id="qrWrap" style="padding:2mm">
+      <div id="qrTitle" class="qr-title" style="font-size:9pt; margin-bottom:1mm;">الصيانة الوقائية</div>
+      <img id="qrImg" alt="QR" style="width:18mm; height:18mm; display:block;"/>
+      <div id="ctrl" class="control-text" style="margin-top:1mm; font-size:9pt;">—</div>
     </div>
   </section>
 
-  <!-- قسم: الشبكة -->
-  <section id="printArea" class="grid-print" style="display:none"></section>
+  <!-- (اختياري) شبكة قسم على ورق عادي -->
+  <section id="printArea" class="grid-print hide"></section>
 </main>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
-  // === Firebase (للوضع القسم) ===
-  const firebaseConfig = {
-    apiKey: "AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
-    authDomain: "pmqrtabuk.firebaseapp.com",
-    projectId: "pmqrtabuk",
-    storageBucket: "pmqrtabuk.firebasestorage.app",
-    messagingSenderId: "305570616285",
-    appId: "1:305570616285:web:4f6839fd08b8b5aa131c34"
-  };
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
-
-  // === Helpers ===
+  // ==== Helpers UI ====
   const $ = s => document.querySelector(s);
   function notify(msg, type='info'){
     const n = $('#notice');
     n.textContent = msg;
-    n.className = 'no-print mb-4 p-3 rounded border text-sm ' + (type==='error' ? 'border-red-300 bg-red-50 text-red-700' : 'border-sky-300 bg-sky-50 text-sky-700');
+    n.className = 'no-print mb-4 p-3 rounded border text-sm ' + (type==='error' ? 'border-red-300 bg-red-50 text-red-700' :
+                                                                 type==='ok'    ? 'border-emerald-300 bg-emerald-50 text-emerald-700' :
+                                                                                   'border-sky-300 bg-sky-50 text-sky-700');
     n.hidden = false;
   }
   function clearNotice(){ const n=$('#notice'); n.hidden=true; n.textContent=''; }
 
-  // رابط مطلق لصفحة الاستيكر
+  // رابط مطلق لصفحة الاستيكر (لو عندك صفحة معاينة عند المسح)
   function buildStickerLink(control){
     const stickerAbs = new URL('sticker.html', location.href).toString();
     return `${stickerAbs}#view/${encodeURIComponent(control)}`;
   }
 
-  // تحويل pt إلى cm (تقريبي)
-  const ptToCm = (pt)=> pt * 0.0352778;
+  // تحويل مم إلى بكسل (تقريبي ~300dpi => 118px لكل سم => 11.8px لكل مم)
+  const mmToPx = (mm)=> Math.round(mm * 11.8);
 
-  // ضبط حجم ورقة الطباعة (@page)
-  function setPageSizeCSS(wcm,hcm){
-    const id='__page_size_style__';
-    let tag=document.getElementById(id);
-    if(!tag){ tag=document.createElement('style'); tag.id=id; document.head.appendChild(tag); }
-    tag.textContent = `@page{ size:${wcm}cm ${hcm}cm; margin:0 }`;
-  }
-
-  async function genQR(text, px=2000){
+  async function genQR(text, px=600){
     try{
-      return await QRCode.toDataURL(text, {width:px, margin:1});
+      // margin=0 علشان أقصى مساحة مرسومة داخل البت ماب
+      return await QRCode.toDataURL(text, {width:px, margin:0, errorCorrectionLevel:'M'});
     }catch{
       return 'https://chart.googleapis.com/chart?cht=qr&chs='+px+'x'+px+'&chl='+encodeURIComponent(text);
     }
   }
 
-  // ===== وضع مفرد =====
+  // تطبيق الإعدادات على عناصر الورقة
   function applySingleSettings(){
-    const wcm = parseFloat($('#wcm').value||'21');   // افتراضي A4
-    const hcm = parseFloat($('#hcm').value||'29.7'); // افتراضي A4
+    const padMM   = parseFloat($('#padMM').value||'2');
+    const qrMM    = Math.max(10, parseFloat($('#qrMM').value||'18')); // أقل حاجة 10 مم علشان يقرا كويس
+    const titlePt = Math.max(6, parseInt($('#titlePt').value||'9',10));
+    const ctrlPt  = Math.max(6, parseInt($('#ctrlPt').value ||'9',10));
 
-    // قيم من الواجهة
-    let pad     = parseFloat($('#padcm').value||'1.5');
-    let qrPct   = Math.max(10, Math.min(100, parseInt($('#qrPct').value||'60',10)));
-    let titlePt = Math.max(8, parseInt($('#titlePt').value||'20',10));
-    let fontPt  = Math.max(8, parseInt($('#fontPt').value||'16',10));
-
-    // لو 6×4 اضبط قيم مناسبة تلقائيًا
-    const is6x4 = (wcm===6 && hcm===4) || (wcm===4 && hcm===6);
-    if(is6x4){
-      pad = 0.3; qrPct = 75; titlePt = 12; fontPt = 10;
-      $('#padcm').value  = pad;
-      $('#qrPct').value  = qrPct;
-      $('#titlePt').value= titlePt;
-      $('#fontPt').value = fontPt;
-    }
-
-    // ورقة بمقاس فعلي
-    $('#canvasArea').style.width  = `${wcm}cm`;
-    $('#canvasArea').style.height = `${hcm}cm`;
-    setPageSizeCSS(wcm, hcm);
-
-    // حواف داخلية
-    $('#qrWrap').style.padding = `${pad}cm`;
-
-    // حساب المساحة المتاحة
-    const usableW = Math.max(0.5, wcm - 2*pad);
-    const titleH = ptToCm(titlePt) * 1.1;
-    const ctrlH  = ptToCm(fontPt)  * 1.1;
-    const spacing = 0.4; // سم
-    const usableH = Math.max(0.5, hcm - 2*pad - titleH - ctrlH - spacing*2);
-
-    // حجم الـQR: أصغر من (نسبة العرض) و (الارتفاع المتاح)
-    const wantedByWidth = usableW * (qrPct/100);
-    const sizeCM = Math.max(0.8, Math.min(wantedByWidth, usableH));
-
-    // تطبيق الأحجام
-    const qrImg = $('#qrImg');
-    qrImg.style.width  = `${sizeCM}cm`;
-    qrImg.style.height = `${sizeCM}cm`;
+    $('#qrWrap').style.padding = `${padMM}mm`;
+    $('#qrImg').style.width  = `${qrMM}mm`;
+    $('#qrImg').style.height = `${qrMM}mm`;
     $('#qrTitle').style.fontSize = `${titlePt}pt`;
-    $('#ctrl').style.fontSize    = `${fontPt}pt`;
+    $('#ctrl').style.fontSize    = `${ctrlPt}pt`;
   }
 
   async function renderSingle(control){
     if(!control){ notify('اكتب رقم Control', 'error'); return; }
     clearNotice();
-    // أظهر ورقة المفرد، وأخفِ شبكة القسم
-    $('#canvasArea').style.display='block';
-    $('#printArea').style.display='none';
 
+    // حساب بكسلات الـQR طبقًا للحجم بالمليمتر
+    const qrMM = Math.max(10, parseFloat($('#qrMM').value||'18'));
+    // ×2 upscaling لحدة أفضل على الحراري
+    const px = Math.max(400, mmToPx(qrMM) * 2);
+
+    // محتوى الـQR: رابط يمكن فتحه بعد المسح
     const link = buildStickerLink(control);
     $('#ctrl').textContent = control;
-
-    // دقة مناسبة للطباعة: ~118px/cm ≈ 300DPI
-    const wcm = parseFloat($('#wcm').value||'21');
-    const pad = parseFloat($('#padcm').value||'1.5');
-    const pct = Math.max(10, Math.min(100, parseInt($('#qrPct').value||'60',10)));
-    const usableW = wcm - (pad*2);
-    const qrCM = Math.max(1, usableW*(pct/100));
-    let px = Math.round(qrCM * 118 * 2); // ×2 لحدة أعلى
-    px = Math.max(px, 600); // حد أدنى
     $('#qrImg').src = await genQR(link, px);
   }
 
-  // ===== وضع قسم =====
-  function setQRCardSize(){
-    const v = $('#qrSize').value;
-    const mm = v==='sm' ? 40 : v==='lg' ? 56 : 48;
-    document.querySelectorAll('.qr-img').forEach(img=>{
-      img.style.width = mm+'mm'; img.style.height = mm+'mm';
-    });
-  }
+  // Presets
+  $('#presetZebra').addEventListener('click', ()=>{
+    // مقاس الورقة ثابت بالـ @page (50×25 مم)
+    $('#padMM').value   = 2;   // هوامش داخلية بسيطة
+    $('#qrMM').value    = 18;  // QR ~18 مم
+    $('#titlePt').value = 9;   // عنوان صغير
+    $('#ctrlPt').value  = 9;   // كنترول صغير وواضح
+    applySingleSettings();
+    const c = $('#singleControl').value.trim();
+    if(c) renderSingle(c);
+    notify('تم تطبيق إعدادات Zebra 50×25mm ✅', 'ok');
+  });
 
-  async function loadSitesDeptsForSelects(){
-    const qs = await getDocs(query(collection(db,'assets'), orderBy('site')));
-    const arr = qs.docs.map(d=> d.data());
-    const sites = [...new Set(arr.map(x=>x.site).filter(Boolean))].sort();
-    const depts = [...new Set(arr.map(x=>x.department).filter(Boolean))].sort();
-    $('#siteSel').innerHTML = '<option value="">— اختر —</option>' + sites.map(s=>`<option>${s}</option>`).join('');
-    $('#deptSel').innerHTML = '<option value="">— اختر —</option>' + depts.map(s=>`<option>${s}</option>`).join('');
-  }
+  $('#presetBig').addEventListener('click', ()=>{
+    // وضع اختبار على A4 (مش للزebra) — بس لتجربة المحتوى بشكل مكبر
+    const styleId='__page_size_style__';
+    let tag=document.getElementById(styleId);
+    if(!tag){ tag=document.createElement('style'); tag.id=styleId; document.head.appendChild(tag); }
+    tag.textContent='@page{ size:297mm 210mm; margin:10mm }';
 
-  function cardHTML(control){
-    return `
-      <div class="qr-card">
-        <img class="qr-img" alt="QR" />
-        <div class="qr-control">${control||''}</div>
-      </div>
-    `;
-  }
+    document.querySelector('.sheet').style.width='120mm';
+    document.querySelector('.sheet').style.height='60mm';
+    $('#padMM').value=5; $('#qrMM').value=40; $('#titlePt').value=14; $('#ctrlPt').value=14;
+    applySingleSettings();
+    const c = $('#singleControl').value.trim();
+    if(c) renderSingle(c);
+    notify('وضع A4 عرضي للاختبار — ليس لطابعة Zebra', 'info');
+  });
 
-  async function renderDept(site, dept){
-    clearNotice();
-    $('#canvasArea').style.display='none';
-    $('#printArea').style.display='grid';
-
-    const area = $('#printArea');
-    area.innerHTML = '';
-
-    const all = (await getDocs(query(collection(db,'assets'), orderBy('control')))).docs.map(d=> d.data());
-    const list = all.filter(x=>{
-      const sOK = !site || x.site===site;
-      const dOK = !dept || x.department===dept;
-      return sOK && dOK;
-    });
-
-    if(!list.length){ notify('لا توجد أجهزة مطابقة للاختيار.', 'error'); area.innerHTML=''; return; }
-
-    area.innerHTML = list.map(x=> cardHTML(x.control)).join('');
-    const imgs = Array.from(area.querySelectorAll('.qr-img'));
-
-    await Promise.all(imgs.map((img,i)=>{
-      const txt = buildStickerLink(list[i].control);
-      return QRCode.toDataURL(txt, {width: 800, margin: 1})
-        .then(url => img.src = url)
-        .catch(()=> img.src = 'https://chart.googleapis.com/chart?cht=qr&chs=800x800&chl=' + encodeURIComponent(txt));
-    }));
-
-    setQRCardSize();
-    notify(`تم تجهيز ${list.length} بطاقة QR.`, 'ok');
-  }
-
-  // ===== واجهة التحكم =====
-  function showMode(m){
-    if(m==='single'){
-      $('#singleControls').classList.remove('hidden');
-      $('#deptControls').classList.add('hidden');
-      $('#singleSettings').classList.remove('hidden');
-      $('#deptSettings').classList.add('hidden');
-      $('#canvasArea').style.display='block';
-      $('#printArea').style.display='none';
-    }else{
-      $('#singleControls').classList.add('hidden');
-      $('#deptControls').classList.remove('hidden');
-      $('#singleSettings').classList.add('hidden');
-      $('#deptSettings').classList.remove('hidden');
-      $('#canvasArea').style.display='none';
-      $('#printArea').style.display='grid';
-      loadSitesDeptsForSelects().catch(()=>{});
-    }
-  }
-
-  // أحداث عامة
+  // زر تطبيق
   $('#apply').addEventListener('click', ()=>{
     applySingleSettings();
     const c = $('#singleControl').value.trim();
     if(c) renderSingle(c);
   });
-  document.querySelectorAll('[data-preset]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const [w,h]=btn.dataset.preset.split('x').map(Number);
-      $('#wcm').value=w; $('#hcm').value=h;
-      if((w===6 && h===4) || (w===4 && h===6)){
-        $('#padcm').value  = 0.3;
-        $('#qrPct').value  = 75;
-        $('#titlePt').value= 12;
-        $('#fontPt').value = 10;
-      }
-      applySingleSettings();
-      const c = $('#singleControl').value.trim();
-      if(c) renderSingle(c);
-    });
-  });
-  $('#qrSize').addEventListener('change', setQRCardSize);
+
+  // طباعة
   $('#btnPrint').addEventListener('click', ()=> window.print());
-  $('#mode').addEventListener('change', e=> showMode(e.target.value));
-  $('#loadDept').addEventListener('click', ()=> renderDept($('#siteSel').value, $('#deptSel').value));
 
-  // تحميل أولي (وضع مفرد على A4)
-  applySingleSettings();
+  // تحميل أولي: اضبط إعدادات Zebra
+  (function init(){
+    // تأكد أن مقاس الصفحة مضبوط دايمًا
+    const tag=document.createElement('style');
+    tag.textContent='@page{ size:50mm 25mm; margin:0 }';
+    document.head.appendChild(tag);
 
-  // Deep-link
-  const params = new URLSearchParams(location.search);
-  const controlQS = params.get('control');
-  const siteQS    = params.get('site');
-  const deptQS    = params.get('dept');
-  const autoprint = params.get('autoprint');
+    applySingleSettings();
 
-  if(controlQS){
-    $('#mode').value = 'single';
-    showMode('single');
-    $('#singleControl').value = decodeURIComponent(controlQS);
-    renderSingle($('#singleControl').value).then(()=>{
-      if(autoprint==='1') setTimeout(()=> window.print(), 300);
-    });
-  }else if(siteQS || deptQS){
-    $('#mode').value = 'dept';
-    showMode('dept');
-    loadSitesDeptsForSelects().then(()=>{
-      if(siteQS) $('#siteSel').value = decodeURIComponent(siteQS);
-      if(deptQS) $('#deptSel').value = decodeURIComponent(deptQS);
-      renderDept($('#siteSel').value, $('#deptSel').value).then(()=>{
-        if(autoprint==='1') setTimeout(()=> window.print(), 300);
+    // Deep-link: ?control=AS-0001&autoprint=1
+    const p = new URLSearchParams(location.search);
+    const ctrl = p.get('control');
+    const autoprint = p.get('autoprint');
+    if (ctrl){
+      $('#singleControl').value = decodeURIComponent(ctrl);
+      renderSingle($('#singleControl').value).then(()=>{
+        if(autoprint==='1'){ setTimeout(()=> window.print(), 300); }
       });
-    });
-  }else{
-    showMode('single');
-  }
+      $('#autoSel').value = autoprint==='1' ? '1' : '0';
+    }
+  })();
 </script>
 </body>
 </html>
