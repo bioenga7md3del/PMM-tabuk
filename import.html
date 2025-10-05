@@ -11,8 +11,12 @@
 <!-- SheetJS (نسخة جلوبال) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
 
+<!-- خط عربي -->
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+
 <style>
-  body{background:#0b1220}
+  :root { color-scheme: dark; }
+  body{background:#0b1220; font-family: "Tajawal", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Naskh Arabic", "Noto Sans Arabic", Arial, sans-serif;}
   .shell{max-width:1200px;margin-inline:auto;padding:18px}
   .panel{background:#0f172a;border:1px solid #1f2937;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
   .title{font-weight:900;letter-spacing:.5px}
@@ -158,6 +162,20 @@ const notice = (msg,type='info')=>{
 const required = ["control","site","department","location","pm_date","next_date","tech","name","brand","serial"];
 let rows=[];
 
+/* خرائط عناوين عربية -> إنجليزي (اختياري) */
+const headerMap = {
+  "رقم التحكم":"control","رقم الجهاز":"control","رقم الأصل":"control","control":"control",
+  "الموقع":"site","site":"site",
+  "القسم":"department","department":"department",
+  "المكان":"location","الموقع الداخلي":"location","location":"location",
+  "تاريخ الصيانة":"pm_date","pm_date":"pm_date",
+  "تاريخ الصيانة القادمة":"next_date","next_date":"next_date",
+  "الفني":"tech","tech":"tech",
+  "الاسم":"name","name":"name",
+  "الماركة":"brand","الشركة المصنعة":"brand","brand":"brand",
+  "الرقم التسلسلي":"serial","serial":"serial"
+};
+
 /* حدث اختيار الملف */
 $('#file').addEventListener('change', async (e)=>{
   const f = e.target.files[0]; 
@@ -173,12 +191,37 @@ $('#file').addEventListener('change', async (e)=>{
     let json = [];
 
     if(ext==='csv'){
-      json = csvToJson(new TextDecoder('utf-8').decode(ab));
+      const text = smartDecodeCSV(new Uint8Array(ab));
+      json = csvToJson(text);
+      // محاولة تعريب العناوين إلى required
+      if (json.length) {
+        json = json.map(row=>{
+          const o={};
+          Object.keys(row).forEach(k=>{
+            const keyNorm = (k||"").trim().toLowerCase();
+            const mapped = headerMap[keyNorm] || headerMap[k.trim()] || keyNorm;
+            o[mapped]=row[k];
+          });
+          return o;
+        });
+      }
     }else{
       const XLSX = window.XLSX; // استخدام النسخة الجلوبال
-      const wb = XLSX.read(ab,{type:'array'});
+      const wb = XLSX.read(ab,{type:'array', cellDates:true});
       const ws = wb.Sheets[wb.SheetNames[0]];
       json = XLSX.utils.sheet_to_json(ws,{defval:""});
+      // نفس فكرة خرائط العناوين لو الإكسل عربي
+      if (json.length) {
+        json = json.map(row=>{
+          const o={};
+          Object.keys(row).forEach(k=>{
+            const keyNorm = (k||"").trim().toLowerCase();
+            const mapped = headerMap[keyNorm] || headerMap[k.trim()] || keyNorm;
+            o[mapped]=row[k];
+          });
+          return o;
+        });
+      }
     }
 
     if(json.length===0){
@@ -188,6 +231,7 @@ $('#file').addEventListener('change', async (e)=>{
       return; 
     }
 
+    // التحقق من الأعمدة (بعد الخرائط)
     const cols = Object.keys(json[0]).map(c=>c.trim());
     const miss = required.filter(c=>!cols.includes(c));
     if(miss.length){
@@ -202,8 +246,8 @@ $('#file').addEventListener('change', async (e)=>{
       const o={}; required.forEach(c=>o[c]=(r[c]??'').toString().trim());
       const fix=(v)=>{ 
         if(!v) return ""; 
-        const looksNumeric=/^\d+(\.\d+)?$/.test(v);
-        if(looksNumeric){ 
+        // رقم مسلسل (Excel serial)؟ 
+        if(/^\d+(\.\d+)?$/.test(v)){ 
           try{ return window.XLSX.SSF.format("yyyy-mm-dd",Number(v)); }
           catch{ return ""; }
         }
@@ -299,6 +343,23 @@ function draw(cols, data){
 
 /* Utilities */
 function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);}
+
+/* CSV smart decode: UTF-8 -> windows-1256 -> iso-8859-6 */
+function smartDecodeCSV(u8){
+  // BOM UTF-8؟
+  if (u8.length>=3 && u8[0]===0xEF && u8[1]===0xBB && u8[2]===0xBF) {
+    return new TextDecoder('utf-8').decode(u8.subarray(3));
+  }
+  const tryEnc = (enc)=>{ try{ return new TextDecoder(enc).decode(u8); } catch { return null; } };
+  const isBad = (txt)=> !txt || (txt.match(/\uFFFD/g)||[]).length > 2; // وجود بدائل كثيرة �
+  let t = tryEnc('utf-8');
+  if (!isBad(t)) return t;
+  t = tryEnc('windows-1256');
+  if (!isBad(t)) return t;
+  t = tryEnc('iso-8859-6');
+  return t || new TextDecoder('utf-8').decode(u8);
+}
+
 function csvToJson(text){
   const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
   if(!lines.length) return [];
