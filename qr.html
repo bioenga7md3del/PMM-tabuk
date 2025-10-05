@@ -30,15 +30,13 @@
   }
   .l-title{ font-weight:800; text-align:center; line-height:1; }
 
-  .single-wrap{ display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
-
-  /* اطبع #sheets فقط */
+  /* اطبع #sheets فقط وبداية الصفحة بدون فراغات */
   @media print{
     @page{ size:A4; margin:0 }
-    body{ background:#fff }
-    body *{ visibility:hidden !important }
-    #sheets, #sheets *{ visibility:visible !important }
-    #sheets{ margin:0 auto; box-shadow:none }
+    html,body{ background:#fff; margin:0; padding:0 }
+    body *{ display:none !important; }
+    #sheets, #sheets *{ display:block !important; visibility:visible !important; }
+    #sheets{ margin:0 !important; box-shadow:none !important; }
     .label{ border:0 } /* لا تطبع الحدود المنقطة */
   }
 </style>
@@ -156,7 +154,7 @@
     </div>
   </section>
 
-  <!-- صفحات A4 الناتجة (اللي بتتطبع بس) -->
+  <!-- صفحات A4 الناتجة (دي بس اللي بتتطبع) -->
   <section id="sheets" class="sheet"></section>
 </main>
 
@@ -181,7 +179,7 @@
   const mm = v => `${v}mm`;
   const pt = v => `${v}pt`;
 
-  // محتوى الـQR: هنستخدم رابط الاستيكر افتراضيًا
+  // محتوى الـQR: رابط الاستيكر تلقائيًا
   function buildQRPayload(control){
     const stickerAbs = new URL('sticker.html', location.href).toString();
     return `${stickerAbs}#view/${encodeURIComponent(control)}`;
@@ -281,11 +279,12 @@
     return { page, perPage };
   }
 
-  // مفرد
+  // مفرد: اللابل يبدأ من أعلى الصفحة مع هامش الصفحة
   async function buildSingle(control, titleText, qrMM, showCtrl){
     const orientation = $('#orientation').value;
     const pageWmm = orientation==='portrait' ? 210 : 297;
     const pageHmm = orientation==='portrait' ? 297 : 210;
+    const pageMargin = parseFloat($('#marginMM').value || '8');
 
     const page = document.createElement('div');
     page.className = 'page';
@@ -293,15 +292,18 @@
     page.style.height = mm(pageHmm);
 
     const wrap = document.createElement('div');
-    wrap.className = 'single-wrap';
     wrap.style.position='absolute';
     wrap.style.inset='0';
+    wrap.style.display='flex';
+    wrap.style.alignItems='flex-start';
+    wrap.style.justifyContent='flex-start';
+    wrap.style.padding = mm(pageMargin);
 
     const label = document.createElement('div');
     label.className = 'label';
     const padMM = 3;
-    label.style.width  = mm(Math.min(120, pageWmm - 40));
-    label.style.height = mm(Math.min(80,  pageHmm - 60));
+    label.style.width  = mm(Math.min(120, pageWmm - pageMargin*2));
+    label.style.height = mm(Math.min(80,  pageHmm - pageMargin*2));
     label.style.padding= mm(padMM);
 
     const title = document.createElement('div');
@@ -333,13 +335,14 @@
     wrap.appendChild(label);
     page.appendChild(wrap);
 
-    const payload = buildQRPayload(control);
     const qrPx = Math.max(300, mmToPx(qrMM) * 2);
+    const payload = buildQRPayload(control);
     img.src = await toQRDataURL(payload, qrPx);
 
     return page;
   }
 
+  // بناء كل الصفحات
   async function buildSheets(){
     const orientation = $('#orientation').value;
     const pageWmm = orientation==='portrait' ? 210 : 297;
@@ -412,9 +415,7 @@
   // ملء Site/Dept
   loadSitesDepts().catch(()=>{});
 
-  // Deep-link:
-  // ?control=AS-0001&autoprint=1  => مفرد
-  // ?site=...&dept=...&autoprint=1 => قسم
+  // Deep-link
   (function initFromQS(){
     const p = new URLSearchParams(location.search);
     const controlQS = p.get('control');
