@@ -2,140 +2,87 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>استيراد الأصول إلى Firestore • PPM TABUK</title>
-
-<!-- Tailwind -->
-<script src="https://cdn.tailwindcss.com"></script>
-
-<!-- خط عربي -->
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
-
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>استيراد الأصول إلى Firestore</title>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <style>
-  :root { color-scheme: dark; }
-  body{background:#0b1220; font-family: "Tajawal", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Naskh Arabic", "Noto Sans Arabic", Arial, sans-serif;}
-  .shell{max-width:1200px;margin-inline:auto;padding:18px}
-  .panel{background:#0f172a;border:1px solid #1f2937;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
-  .title{font-weight:900;letter-spacing:.5px}
-  .muted{color:#94a3b8}
-  .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #374151;border-radius:999px;background:#0b1220;color:#e5e7eb}
-  .btn{padding:.65rem 1rem;border-radius:.8rem;font-weight:800}
-  .btn-blue{background:#3b82f6;color:#eaf2ff}
-  .btn-green{background:#10b981;color:#062e2e}
-  .btn-rose{background:#ef4444;color:#fff}
-  .notice{position:sticky;top:0;z-index:50;margin:10px auto;max-width:1200px;padding:10px 14px;border-radius:12px;text-align:center;font-weight:800}
-  .n-ok{background:rgba(16,185,129,.15);color:#a7f3d0;border:1px solid rgba(16,185,129,.45)}
-  .n-info{background:rgba(59,130,246,.15);color:#bfdbfe;border:1px solid rgba(59,130,246,.45)}
-  .n-err{background:rgba(239,68,68,.15);color:#fecaca;border:1px solid rgba(239,68,68,.45)}
-  table{border-collapse:collapse;width:100%}
-  th,td{border-top:1px solid #1f2937;padding:8px 10px;white-space:nowrap}
-  th{background:#0b1220;color:#c7d2fe;position:sticky;top:0}
-  .box{border:1px solid #1f2937;border-radius:14px;background:#0b1220}
-  input[type="file"]{display:none}
+  :root{--bg:#0b1220;--card:#111827;--muted:#94a3b8;--text:#e5e7eb;--ok:#10b981;--err:#ef4444;--info:#3b82f6}
+  html,body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px}
+  .card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:16px;margin:12px 0;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+  input,select{background:#0b1220;color:#fff;border:1px solid #374151;border-radius:10px;padding:10px 12px}
+  .btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+  .btn.ok{background:#10b981;color:#083344}
+  .btn.sec{background:#3b82f6;color:#e0f2fe}
+  .muted{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border:1px solid #1f2937;padding:6px 8px}
+  th{background:#0f172a}
+  .prog{height:10px;background:#0f172a;border-radius:8px;overflow:hidden}
+  .bar{height:100%;width:0;background:#10b981}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;margin-inline-start:6px}
+  .good{background:rgba(16,185,129,.2);color:#a7f3d0}
+  .bad{background:rgba(239,68,68,.2);color:#fecaca}
+  .note{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.4);padding:10px;border-radius:10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 </style>
 </head>
-<body class="text-slate-100">
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>استيراد الأصول إلى Firestore</h1>
 
-<!-- إشعار علوي -->
-<div id="notice" class="notice n-info">60 صف/دفعة — استورد ملف XLSX/CSV، عاينه ثم ارفعه.</div>
-
-<div class="shell">
-  <div class="panel p-4 md:p-6">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
-      <div class="title text-2xl">استيراد الأصول إلى Firestore</div>
-      <div class="text-sm muted">control, site, department, location, pm_date, next_date, tech, name, brand, serial</div>
-    </div>
-
-    <!-- شريط أدوات -->
-    <div class="box p-4 md:p-5 mb-5">
-      <div class="grid md:grid-cols-12 gap-3 items-center">
-        <!-- أزرار تحميل النماذج -->
-        <div class="md:col-span-5 flex flex-wrap gap-2">
-          <button id="btnCsv"   type="button" class="btn btn-green">تحميل نموذج (CSV سريع)</button>
-          <button id="btnXls"   type="button" class="btn btn-blue">تحميل نموذج (Excel)</button>
-          <a id="csvDirect" download="pm_assets_template.csv" class="hidden"></a>
-        </div>
-
-        <!-- اختيار ملف -->
-        <div class="md:col-span-4 flex items-center gap-2">
-          <label for="file" class="pill cursor-pointer">اختر ملف</label>
-          <input id="file" type="file" accept=".xlsx,.xls,.csv">
-          <span id="fileName" class="muted text-sm"></span>
-        </div>
-
-        <!-- الكتابة فوق الموجود + رفع -->
-        <div class="md:col-span-3 flex items-center justify-end gap-2">
-          <label class="flex items-center gap-2 text-sm">
-            <input id="overwrite" type="checkbox" class="accent-sky-500" checked>
-            تفعيل كتابة فوق الموجود
-          </label>
-          <button id="btnUpload" type="button" class="btn btn-blue disabled:opacity-40" disabled>رفع للقاعدة</button>
-        </div>
+    <div class="note">
+      استخدم هذا النموذج لتجهيز الملف بدون لخبطة في الأعمدة:
+      <div class="row" style="margin-top:8px">
+        <button class="btn sec" id="tplXlsx">تحميل نموذج (Excel)</button>
+        <button class="btn sec" id="tplCsv">تحميل نموذج (CSV)</button>
       </div>
-
-      <!-- ملاحظة صغيرة -->
-      <div class="mt-3 text-xs muted">
-        التواريخ بصيغة <b>YYYY-MM-DD</b>. لو ملف Excel فيه Serial Dates هيتم تحويلها تلقائيًا.
-      </div>
+      الأعمدة القياسية: <b>Control Number</b>, <b>Site</b>, <b>Department</b>, <b>Location</b>,
+      <b>PM Date</b>, <b>Next Date</b>, <b>Technician</b>,
+      <b>Name</b>, <b>Brand</b>, <b>Serial</b>.
+      (لو <b>Next Date</b> فاضي هيتحسب تلقائيًا = +6 شهور من PM Date)
     </div>
 
-    <!-- إحصائيات + المعاينة -->
-    <div class="flex flex-wrap items-center gap-2 mb-2" id="stats"></div>
-    <div class="overflow-auto max-h-[65vh] rounded-xl border border-slate-700">
-      <table id="preview"></table>
+    <div class="row">
+      <input type="file" id="file" accept=".xlsx,.xls,.csv"/>
+      <label><input type="checkbox" id="dry" checked> تشغيل كتجربة (بدون كتابة)</label>
+      <label>المجموعة: <input id="collection" value="assets" style="min-width:160px"></label>
+      <button class="btn sec" id="parseBtn">قراءة الملف</button>
     </div>
+    <div id="status" class="muted">لم يتم تحميل ملف بعد.</div>
+  </div>
 
-    <!-- أزرار تحت الجدول -->
-    <div class="mt-4 flex flex-wrap gap-2">
-      <button id="btnClear" type="button" class="btn btn-rose">مسح المعاينة</button>
+  <div class="card" id="mapCard" style="display:none">
+    <h2>خريطة الأعمدة</h2>
+    <div class="grid" id="mapping"></div>
+    <div class="row">
+      <button class="btn sec" id="previewBtn">معاينة أول 10 صفوف</button>
+      <button class="btn ok" id="importBtn">بدء الاستيراد</button>
     </div>
+  </div>
+
+  <div class="card" id="previewCard" style="display:none">
+    <h2>المعاينة</h2>
+    <div id="preview"></div>
+  </div>
+
+  <div class="card" id="progressCard" style="display:none">
+    <h2>التقدم</h2>
+    <div class="prog"><div class="bar" id="bar"></div></div>
+    <div id="log" style="margin-top:10px;white-space:pre-wrap;font-family:ui-monospace,monospace"></div>
   </div>
 </div>
 
-<!-- منطق الواجهة (أزرار النماذج) -->
-<script>
-(()=> {
-  const $ = s=>document.querySelector(s);
-  const header = ["control","site","department","location","pm_date","next_date","tech","name","brand","serial"];
-  const sample = [
-    ["AS-0001","الموقع A","LAB","غرفة 101","2025-01-15","2025-07-15","Ahmed","Infusion Pump","B Braun","SN12345"],
-    ["MT/AS/12","mobile","sada","","2025-09-25","2026-03-25","ahmed","","",""]
-  ];
-  const toCSV = (arr)=>arr.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const csvData = 'data:text/csv;charset=utf-8,' + encodeURIComponent(toCSV([header,...sample]));
+<!-- SheetJS لقراءة/إنشاء Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  const notice = (msg,type='info')=>{
-    const n=$('#notice');
-    n.textContent=msg;
-    n.className='notice '+(type==='ok'?'n-ok':type==='error'?'n-err':'n-info');
-  };
-
-  // تنزيل CSV سريع
-  $('#btnCsv').onclick = ()=>{
-    const a = $('#csvDirect'); a.href = csvData; a.click();
-    notice('تم إنشاء نموذج CSV ✅','ok');
-  };
-
-  // تنزيل Excel (لو SheetJS متاحة وإلا CSV)
-  $('#btnXls').onclick = ()=>{
-    try{
-      // هننشئ الملف باستخدام مكتبة ESM لاحقًا من الموديول، فلو دي فشلت هنطلع CSV
-      const a=document.createElement('a'); a.href=csvData; a.download='pm_assets_template.csv'; a.click();
-      notice('تم إنشاء CSV، ويمكنك فتحه في Excel ✅','ok');
-    }catch(e){ notice('تعذر إنشاء النموذج: '+(e.message||''),'error'); }
-  };
-})();
-</script>
-
-<!-- Firebase + الاستيراد والرفع (ESM) -->
 <script type="module">
-/* Firebase */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getFirestore, writeBatch, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+import { getFirestore, collection, doc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-/* SheetJS كـ ESM */
-import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.19.3/+esm";
-
+/* ==== Firebase Config (مشروعك) ==== */
 const firebaseConfig = {
   apiKey: "AIzaSyDegk1oK0xV8TgrZcwbkRLA2VgzkGK_1MM",
   authDomain: "pmqrtabuk.firebaseapp.com",
@@ -147,222 +94,227 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-/* Helpers */
-const $ = s=>document.querySelector(s);
-const notice = (msg,type='info')=>{
-  const n=$('#notice'); n.textContent=msg; n.className='notice '+(type==='ok'?'n-ok':type==='error'?'n-err':'n-info');
+/* ==== عناصر ==== */
+const $ = s => document.querySelector(s);
+const fileInput = $('#file');
+const parseBtn  = $('#parseBtn');
+const previewBtn= $('#previewBtn');
+const importBtn = $('#importBtn');
+const mappingEl = $('#mapping');
+const mapCard   = $('#mapCard');
+const previewCard=$('#previewCard');
+const progressCard=$('#progressCard');
+const statusEl  = $('#status');
+const previewEl = $('#preview');
+const bar       = $('#bar');
+const logEl     = $('#log');
+const colInput  = $('#collection');
+const dryEl     = $('#dry');
+const tplXlsx   = $('#tplXlsx');
+const tplCsv    = $('#tplCsv');
+
+let headers = [];
+let rows = [];
+let map = {};
+
+/* ==== توليد ملفات النموذج ==== */
+function downloadCSV(filename, rows){
+  const header = Object.keys(rows[0]).join(',');
+  const body = rows.map(r=>Object.values(r).map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([header + '\n' + body], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function downloadXLSX(filename, rows){
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Assets');
+  XLSX.writeFile(wb, filename);
+}
+
+/* == نموذج محدّث يحتوي الأعمدة الجديدة == */
+const TEMPLATE_HEADERS = ["Control Number","Site","Department","Location","PM Date","Next Date","Technician","Name","Brand","Serial"];
+const TEMPLATE_SAMPLE = [{
+  "Control Number":"AS-0001",
+  "Site":"Mobile Team",
+  "Department":"Elsada",
+  "Location":"OR-1 (اختياري)",
+  "PM Date":"2025-09-25",
+  "Next Date":"",               // اتركه فاضي لو تحب يتحسب تلقائيًا
+  "Technician":"Ahmed",
+  "Name":"Infusion Pump",
+  "Brand":"B Braun",
+  "Serial":"SN12345"
+}];
+tplXlsx.onclick = ()=> downloadXLSX('pm_assets_template.xlsx', TEMPLATE_SAMPLE);
+tplCsv.onclick  = ()=> downloadCSV('pm_assets_template.csv', TEMPLATE_SAMPLE);
+
+/* ==== تطبيع الأعمدة & الاستيراد ==== */
+const ALIASES = {
+  control: new Set(['control number','control','controlnumber','رقم الجهاز','رقم التحكم','الكنترول','رقم الأصل','رقم الاصل']),
+  site: new Set(['site','الموقع','المستشفى','المنشأة','facility']),
+  department: new Set(['department','القسم','القسم/الوحدة','section']),
+  location: new Set(['location','الوصف','الوصف التفصيلي','الموقع الداخلي','الغرفة']),
+  pm_date: new Set(['pm date','pm_date','تاريخ الصيانة الوقائية','تاريخ pm','pmdate']),
+  next_date: new Set(['next date','next_date','الصيانة القادمة','تاريخ الصيانة القادمة','nextdate']),
+  tech: new Set(['technician','tech','القائم بالصيانة','الفني','الفني المسؤول','technican','technician name']),
+  // الجدد:
+  name: new Set(['name','اسم الجهاز','الاسم','device name','equipment name','اسم المعدة']),
+  brand: new Set(['brand','الماركة','الشركة المصنعة','manufacturer','make','الشركة','المُصنِّع']),
+  serial: new Set(['serial','serial no','serial number','sn','الرقم التسلسلي','رقم التسلسل','s/n'])
 };
-const required = ["control","site","department","location","pm_date","next_date","tech","name","brand","serial"];
-let rows=[];
+function norm(s){ return String(s||'').trim().toLowerCase().replace(/ـ/g,''); }
+function guessTarget(h){
+  const n = norm(h);
+  for(const [t,set] of Object.entries(ALIASES)){ if(set.has(n)) return t; }
+  return null;
+}
+function toISO(d){
+  if(d===undefined || d===null || d==='') return null;
+  if(typeof d==='number'){ const unix = (d - 25569) * 86400 * 1000; return new Date(unix).toISOString().slice(0,10); }
+  const dt = new Date(d); return isNaN(+dt) ? null : dt.toISOString().slice(0,10);
+}
+function addMonths(dateISO, m=6){ if(!dateISO) return null; const dt = new Date(dateISO); dt.setMonth(dt.getMonth()+m); return dt.toISOString().slice(0,10); }
+function safeId(s){ return String(s||'').trim().replace(/[\/#?\s]+/g,'-'); }
 
-/* خرائط عناوين عربية -> إنجليزي (اختياري) */
-const headerMap = {
-  "رقم التحكم":"control","رقم الجهاز":"control","رقم الأصل":"control","control":"control",
-  "الموقع":"site","site":"site",
-  "القسم":"department","department":"department",
-  "المكان":"location","الموقع الداخلي":"location","location":"location",
-  "تاريخ الصيانة":"pm_date","pm_date":"pm_date",
-  "تاريخ الصيانة القادمة":"next_date","next_date":"next_date",
-  "الفني":"tech","tech":"tech",
-  "الاسم":"name","name":"name",
-  "الماركة":"brand","الشركة المصنعة":"brand","brand":"brand",
-  "الرقم التسلسلي":"serial","serial":"serial"
+/* ==== قراءة الملف ==== */
+const readCSV = async (buf) => {
+  // مبدئيًا UTF-8 (لو عندك ملفات Windows-1256 قولي أضيف Smart Decoder)
+  const text = new TextDecoder('utf-8').decode(buf);
+  const wb = XLSX.read(text, {type:'string'});
+  return wb.Sheets[wb.SheetNames[0]];
 };
 
-/* حدث اختيار الملف */
-$('#file').addEventListener('change', async (e)=>{
-  const f = e.target.files[0]; 
-  if(!f) return;
-
-  // عرض الاسم
-  $('#fileName').textContent = f.name;
-  notice('جارِ قراءة الملف…');
-
+parseBtn.onclick = async ()=>{
+  const file = fileInput.files?.[0];
+  if(!file){ statusEl.textContent='اختر ملف أولًا.'; return; }
+  statusEl.textContent='جاري القراءة…';
   try{
-    const ext = f.name.toLowerCase().split('.').pop();
-    const ab  = await f.arrayBuffer();
-    let json = [];
-
-    if(ext==='csv'){
-      const text = smartDecodeCSV(new Uint8Array(ab));
-      json = csvToJson(text);
-      // خرائط العناوين
-      if (json.length) {
-        json = mapHeaders(json, headerMap);
-      }
+    const buf = await file.arrayBuffer();
+    let ws;
+    if(file.name.toLowerCase().endsWith('.csv')){
+      ws = await readCSV(buf);
     }else{
-      const wb = XLSX.read(ab,{type:'array', cellDates:true});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      json = XLSX.utils.sheet_to_json(ws,{defval:""});
-      if (json.length) {
-        json = mapHeaders(json, headerMap);
-      }
+      const wb = XLSX.read(buf, {type:'array'});
+      ws = wb.Sheets[wb.SheetNames[0]];
     }
+    rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+    headers = Object.keys(rows[0]||{});
+    if(headers.length===0){ statusEl.textContent='لا يوجد أعمدة في الشيت الأول.'; return; }
 
-    if(json.length===0){
-      rows=[]; draw([],[]); $('#btnUpload').disabled=true;
-      notice('الملف فارغ','error'); 
-      $('#file').value = ""; 
-      return; 
+    // خريطة مبدئية تشمل الأعمدة الجديدة
+    map = {control:null, site:null, department:null, location:null, pm_date:null, next_date:null, tech:null, name:null, brand:null, serial:null};
+    headers.forEach(h=>{ const t = guessTarget(h); if(t && !map[t]) map[t]=h; });
+
+    // واجهة المابينج
+    mappingEl.innerHTML = '';
+    for(const t of Object.keys(map)){
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <label style="display:block;margin-bottom:6px">${t}</label>
+        <select data-target="${t}" style="min-width:220px">
+          <option value="">— غير مخصص —</option>
+          ${headers.map(h=>`<option value="${h}" ${map[t]===h?'selected':''}>${h}</option>`).join('')}
+        </select>`;
+      mappingEl.appendChild(div);
     }
-
-    // التحقق من الأعمدة
-    const cols = Object.keys(json[0]).map(c=>c.trim());
-    const miss = required.filter(c=>!cols.includes(c));
-    if(miss.length){
-      rows=[]; draw([],[]); $('#btnUpload').disabled=true;
-      notice('أعمدة ناقصة: '+miss.join(', '),'error');
-      $('#file').value = "";
-      return;
-    }
-
-    // تجهيز الصفوف وتحويل التواريخ
-    rows = json.map(r=>{
-      const o={}; required.forEach(c=>o[c]=(r[c]??'').toString().trim());
-      const fix=(v)=>{ 
-        if(!v) return ""; 
-        if(/^\d+(\.\d+)?$/.test(v)){ 
-          try{ return XLSX.SSF.format("yyyy-mm-dd",Number(v)); }
-          catch{ return ""; }
-        }
-        const d=new Date(v); 
-        return isNaN(d)?v:d.toISOString().slice(0,10);
-      };
-      o.pm_date=fix(o.pm_date); 
-      o.next_date=fix(o.next_date); 
-      return o;
+    mappingEl.querySelectorAll('select').forEach(sel=>{
+      sel.onchange = () => map[sel.dataset.target]=sel.value||null;
     });
 
-    draw(required, rows);
-    $('#btnUpload').disabled=false;
-    notice(`تمت المعاينة: ${rows.length} صفًا ✅`,'ok');
-
-  }catch(err){
-    console.error(err); 
-    rows=[]; draw([],[]); $('#btnUpload').disabled=true;
-    notice('فشل قراءة الملف: '+(err.message||''),'error');
-  } finally {
-    e.target.value = ""; // تسمح باختيار نفس الملف مرة أخرى
-  }
-});
-
-/* مسح المعاينة */
-$('#btnClear').onclick = ()=>{
-  rows=[]; draw([],[]); 
-  $('#file').value=""; 
-  $('#fileName').textContent=""; 
-  $('#btnUpload').disabled=true; 
-  notice('تم مسح المعاينة','info');
+    mapCard.style.display='block';
+    previewCard.style.display='none';
+    progressCard.style.display='none';
+    statusEl.textContent=`تم التحميل: ${rows.length} صفًا • ${headers.length} عمودًا`;
+  }catch(e){ statusEl.textContent='فشل قراءة الملف: '+e.message; }
 };
 
-/* رفع للفايرستور */
-$('#btnUpload').onclick = async ()=>{
-  if(!rows.length) return;
-  const overwrite = $('#overwrite').checked;
-  if(!confirm(`سيتم رفع ${rows.length} صفًا${overwrite?' (مع الكتابة فوق الموجود)':''}. متابعة؟`)) return;
+/* ==== المعاينة ==== */
+previewBtn.onclick = ()=>{
+  const sample = rows.slice(0,10);
+  const cols = Object.values(map).filter(Boolean); // الأعمدة المختارة فقط
+  if(cols.length===0){ previewEl.textContent='اختر أعمدة أولًا.'; previewCard.style.display='block'; return; }
+  let html = '<table><thead><tr>';
+  html += cols.map(c=>`<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+  for(const r of sample){ html += '<tr>' + cols.map(c=>`<td>${r[c]??''}</td>`).join('') + '</tr>'; }
+  html += '</tbody></table>';
+  previewEl.innerHTML = html;
+  previewCard.style.display='block';
+};
 
-  notice('جارِ الرفع…'); 
-  $('#btnUpload').disabled=true;
+/* ==== الاستيراد ==== */
+importBtn.onclick = async ()=>{
+  // نخلي control و pm_date إلزاميين زي ما هو، والباقي اختياري
+  const requiredMapKeys = ['control','pm_date'];
+  for(const r of requiredMapKeys){ if(!map[r]){ alert(`العمود الإجباري مفقود: ${r}`); return; } }
+  const coll = (document.getElementById('collection').value||'assets').trim();
+  const dry  = dryEl.checked;
 
-  const chunk = 60; let ok=0, fail=0;
-  const idSafe = s=> s.toString().trim().replace(/[\/#?\s]/g,'-');
+  progressCard.style.display='block';
+  bar.style.width='0%'; logEl.textContent='';
+  const total = rows.length; let done=0, ok=0, fail=0;
 
-  try{
-    for(let i=0;i<rows.length;i+=chunk){
-      const part = rows.slice(i,i+chunk);
-      const batch = writeBatch(db);
+  const chunkSize = 400;
+  for(let i=0;i<rows.length;i+=chunkSize){
+    const chunk = rows.slice(i, i+chunkSize);
+    const batch = writeBatch(db);
 
-      part.forEach(r=>{
-        const id = idSafe(r.control||'');
-        if(!id){ fail++; return; }
+    for(const r of chunk){
+      try{
+        const control = String(map.control? r[map.control] : '').trim();
+        if(!control) throw new Error('Control فارغ');
+
+        const pm   = toISO(map.pm_date? r[map.pm_date] : null);
+        if(!pm) throw new Error('PM Date غير صالح');
+        let next   = toISO(map.next_date? r[map.next_date] : null) || addMonths(pm,6);
+
+        // الحقول الاختيارية (ومنها الجداد)
+        const site = map.site? r[map.site] : null;
+        const dept = map.department? r[map.department] : null;
+        const loc  = map.location? r[map.location] : null;
+        const tech = map.tech? r[map.tech] : null;
+
+        const name  = map.name?  String(r[map.name]  ?? '').trim() : null;
+        const brand = map.brand? String(r[map.brand] ?? '').trim() : null;
+        const serial= map.serial?String(r[map.serial]?? '').trim() : null;
+
         const data = {
-          control:r.control||'', site:r.site||'', department:r.department||'',
-          location:r.location||'', pm_date:r.pm_date||'', next_date:r.next_date||'',
-          tech:r.tech||'', name:r.name||'', brand:r.brand||'', serial:r.serial||'',
+          control,
+          site: site || null,
+          department: dept || null,
+          location: loc || null,
+          pm_date: pm,
+          next_date: next || null,
+          tech: tech || null,
+          // الجُداد:
+          name: name || null,
+          brand: brand || null,
+          serial: serial || null,
           updatedAt: serverTimestamp()
         };
-        batch.set(doc(db,'assets',id), data, { merge: overwrite });
-      });
 
-      await batch.commit();
-      ok += part.length;
-      notice(`تم رفع ${ok}/${rows.length}…`);
+        if(!dry){
+          const ref = doc(collection(db, coll), safeId(control));
+          batch.set(ref, data, { merge: true }); // merge=true علشان ما نمسحش حقول قديمة بالخطأ
+        }
+        ok++;
+      }catch(e){
+        fail++;
+        logEl.textContent += `❌ ${map.control? (rows[0] && r[map.control]) : ''} — ${e.message}\n`;
+      }finally{
+        done++;
+      }
     }
-    notice(`اكتمل الرفع ✅ تم: ${ok} — فشل: ${fail}`,'ok');
-  }catch(err){
-    console.error(err); 
-    notice('فشل الرفع: '+(err.message||''),'error');
-  } finally {
-    $('#btnUpload').disabled=false;
+
+    if(!dry){ await batch.commit(); }
+    bar.style.width = `${Math.round((done/total)*100)}%`;
   }
+
+  logEl.textContent = `✅ ناجحة: ${ok}   ❌ فاشلة: ${fail}\n` + logEl.textContent;
+  if(dry) logEl.textContent = 'وضع التجربة مفعّل — لم يتم كتابة أي بيانات.\n' + logEl.textContent;
 };
-
-/* Utilities */
-function mapHeaders(json, map){
-  return json.map(row=>{
-    const o={};
-    Object.keys(row).forEach(k=>{
-      const keyNorm = (k||"").trim().toLowerCase();
-      const mapped = map[keyNorm] || map[k.trim()] || keyNorm;
-      o[mapped]=row[k];
-    });
-    return o;
-  });
-}
-
-function draw(cols, data){
-  const t = $('#preview');
-  if(!cols.length){ t.innerHTML=''; $('#stats').innerHTML=''; return; }
-
-  const thead=`<thead><tr>${cols.map(c=>`<th class="text-right">${c}</th>`).join('')}</tr></thead>`;
-  const tbody=`<tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${esc(r[c]||'')}</td>`).join('')}</tr>`).join('')}</tbody>`;
-  t.innerHTML = thead+tbody;
-
-  const invalid = data.filter(r=>(r.pm_date && !/^\d{4}-\d{2}-\d{2}$/.test(r.pm_date)) || (r.next_date && !/^\d{4}-\d{2}-\d{2}$/.test(r.next_date))).length;
-  document.querySelector('#stats').innerHTML = `
-    <span class="pill">الصفوف: ${data.length}</span>
-    <span class="pill">تواريخ غير منسقة: ${invalid}</span>
-    <span class="pill">أعمدة: ${cols.length}</span>
-  `;
-}
-
-function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);}
-
-/* CSV smart decode: UTF-8 -> windows-1256 -> iso-8859-6 */
-function smartDecodeCSV(u8){
-  if (u8.length>=3 && u8[0]===0xEF && u8[1]===0xBB && u8[2]===0xBF) {
-    return new TextDecoder('utf-8').decode(u8.subarray(3));
-  }
-  const tryEnc = (enc)=>{ try{ return new TextDecoder(enc).decode(u8); } catch { return null; } };
-  const isBad = (txt)=> !txt || (txt.match(/\uFFFD/g)||[]).length > 2;
-  let t = tryEnc('utf-8');
-  if (!isBad(t)) return t;
-  t = tryEnc('windows-1256');
-  if (!isBad(t)) return t;
-  t = tryEnc('iso-8859-6');
-  return t || new TextDecoder('utf-8').decode(u8);
-}
-
-function csvToJson(text){
-  const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
-  if(!lines.length) return [];
-  const head=splitCSV(lines[0]).map(h=>h.trim());
-  return lines.slice(1).map(line=>{
-    const c=splitCSV(line); 
-    const o={}; head.forEach((h,i)=>o[h]=(c[i]??'').trim()); 
-    return o; 
-  });
-}
-function splitCSV(line){
-  const out=[]; let cur=''; let q=false;
-  for(let i=0;i<line.length;i++){
-    const ch=line[i];
-    if(ch==='"'){ if(q && line[i+1]==='"'){cur+='"'; i++;} else q=!q; }
-    else if(ch===',' && !q){ out.push(cur); cur='';}
-    else cur+=ch;
-  }
-  out.push(cur); return out;
-}
 </script>
 </body>
 </html>
