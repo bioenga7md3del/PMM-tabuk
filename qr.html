@@ -30,13 +30,13 @@
   }
   .l-title{ font-weight:800; text-align:center; line-height:1; }
 
-  /* اطبع #sheets فقط وبداية الصفحة بدون فراغات */
+  /* الطباعة: اخفِ كل إخوة #sheets واطبع #sheets فقط من أعلى الصفحة */
   @media print{
     @page{ size:A4; margin:0 }
     html,body{ background:#fff; margin:0; padding:0 }
-    body *{ display:none !important; }
-    #sheets, #sheets *{ display:block !important; visibility:visible !important; }
-    #sheets{ margin:0 !important; box-shadow:none !important; }
+    body > *:not(#sheets){ display:none !important; }       /* أخفي العناصر الأخرى */
+    #sheets{ display:block !important; margin:0 !important; box-shadow:none !important; }
+    #sheets *{ visibility:visible !important; }
     .label{ border:0 } /* لا تطبع الحدود المنقطة */
   }
 </style>
@@ -154,7 +154,7 @@
     </div>
   </section>
 
-  <!-- صفحات A4 الناتجة (دي بس اللي بتتطبع) -->
+  <!-- صفحات A4 الناتجة (دي فقط اللي بتتطبع) -->
   <section id="sheets" class="sheet"></section>
 </main>
 
@@ -234,6 +234,8 @@
     const need = Math.min(perPage, controls.length);
     const qrPx = Math.max(300, mmToPx(qrMM) * 2);
 
+    const pending = [];
+
     for(let i=0;i<need;i++){
       const control = controls[i];
 
@@ -272,14 +274,15 @@
       grid.appendChild(label);
 
       const payload = buildQRPayload(control);
-      toQRDataURL(payload, qrPx).then(url => img.src = url);
+      const p = toQRDataURL(payload, qrPx).then(url => { img.src = url; });
+      pending.push(p);
     }
 
     page.appendChild(grid);
-    return { page, perPage };
+    return { page, perPage, pending };
   }
 
-  // مفرد: اللابل يبدأ من أعلى الصفحة مع هامش الصفحة
+  // مفرد: من أعلى الصفحة مع هامش
   async function buildSingle(control, titleText, qrMM, showCtrl){
     const orientation = $('#orientation').value;
     const pageWmm = orientation==='portrait' ? 210 : 297;
@@ -337,7 +340,7 @@
 
     const qrPx = Math.max(300, mmToPx(qrMM) * 2);
     const payload = buildQRPayload(control);
-    img.src = await toQRDataURL(payload, qrPx);
+    await toQRDataURL(payload, qrPx).then(url => { img.src = url; });
 
     return page;
   }
@@ -391,15 +394,25 @@
 
     let rest = controls.slice();
     while(rest.length){
-      const { page, perPage } = await buildPage(rest, pageWmm, pageHmm, margin, gapX, gapY, labelW, labelH, padMM, qrMM, fontPt, titleText, showCtrl);
+      const { page, perPage, pending } = await buildPage(rest, pageWmm, pageHmm, margin, gapX, gapY, labelW, labelH, padMM, qrMM, fontPt, titleText, showCtrl);
       sheets.appendChild(page);
+      if (pending?.length) { await Promise.all(pending); }
       rest = rest.slice(perPage);
     }
   }
 
-  // أزرار
-  $('#btnBuild').addEventListener('click', buildSheets);
-  $('#btnPrint').addEventListener('click', ()=> window.print());
+  // ===== أزرار =====
+  document.getElementById('btnBuild').addEventListener('click', buildSheets);
+
+  document.getElementById('btnPrint').addEventListener('click', async ()=>{
+    const sheets = document.getElementById('sheets');
+    if (!sheets.children.length) { await buildSheets(); }
+    const imgs = Array.from(sheets.querySelectorAll('img'));
+    await Promise.all(imgs.map(img => img.complete ? Promise.resolve() :
+      new Promise(res => { img.onload = res; img.onerror = res; })
+    ));
+    setTimeout(()=> window.print(), 50);
+  });
 
   // Presets
   document.getElementById('preset_5x2_5').addEventListener('click', ()=>{
@@ -427,7 +440,14 @@
       $('#mode').value = 'single';
       switchMode('single');
       $('#singleControl').value = decodeURIComponent(controlQS);
-      buildSheets().then(()=> { if(autoprint==='1') setTimeout(()=> window.print(), 300); });
+      buildSheets().then(async ()=> {
+        if(autoprint==='1'){
+          // انتظر الصور قبل الطباعة التلقائية
+          const imgs = Array.from(document.querySelectorAll('#sheets img'));
+          await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(r => { img.onload=r; img.onerror=r; })));
+          setTimeout(()=> window.print(), 50);
+        }
+      });
       return;
     }
     if(siteQS || deptQS){
@@ -436,7 +456,13 @@
       loadSitesDepts().then(()=>{
         if(siteQS) $('#siteSel').value = decodeURIComponent(siteQS);
         if(deptQS) $('#deptSel').value = decodeURIComponent(deptQS);
-        buildSheets().then(()=> { if(autoprint==='1') setTimeout(()=> window.print(), 300); });
+        buildSheets().then(async ()=> {
+          if(autoprint==='1'){
+            const imgs = Array.from(document.querySelectorAll('#sheets img'));
+            await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(r => { img.onload=r; img.onerror=r; })));
+            setTimeout(()=> window.print(), 50);
+          }
+        });
       });
       return;
     }
