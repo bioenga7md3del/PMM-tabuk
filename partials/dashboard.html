@@ -1,33 +1,44 @@
-<!-- صف علوي يحتوي لوحة Work Orders يسار & مؤشرات يمين -->
+<!-- صف علوي: Work Orders داكنة + KPIs -->
 <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-  <!-- Work Orders Panel -->
+  <!-- Work Orders -->
   <div class="lg:col-span-5">
     <div class="wo-panel">
       <div class="flex items-start gap-3">
-        <div class="wo-side">There are many actions to do for your work orders now! • View All</div>
+        <div class="wo-side hidden md:block">
+          There are many actions to do for your work orders now! • View All
+        </div>
         <div class="flex-1">
           <div class="flex items-center justify-between">
             <div class="wo-title">Work Orders</div>
-            <div class="text-2xl font-extrabold">4720</div>
+            <div class="text-2xl font-extrabold">
+              <span class="wo-v" data-bind="wo.total"></span>
+            </div>
           </div>
+
           <div class="wo-grid mt-3">
             <div class="wo-tile">
-              <div class="wo-k">Active</div><div class="wo-v">17</div>
+              <div class="wo-k">Active</div>
+              <div class="wo-v" data-bind="wo.active"></div>
             </div>
             <div class="wo-tile">
-              <div class="wo-k">Closed</div><div class="wo-v">6</div>
+              <div class="wo-k">Closed</div>
+              <div class="wo-v" data-bind="wo.closed"></div>
             </div>
             <div class="wo-tile">
-              <div class="wo-k">Assigned</div><div class="wo-v">1</div>
+              <div class="wo-k">Assigned</div>
+              <div class="wo-v" data-bind="wo.assigned"></div>
             </div>
             <div class="wo-tile">
-              <div class="wo-k">Pending for Spare</div><div class="wo-v">6</div>
+              <div class="wo-k">Pending for Spare</div>
+              <div class="wo-v" data-bind="wo.pending_spare"></div>
             </div>
             <div class="wo-tile">
-              <div class="wo-k">Signed Off</div><div class="wo-v">4655</div>
+              <div class="wo-k">Signed Off</div>
+              <div class="wo-v" data-bind="wo.signed_off"></div>
             </div>
             <div class="wo-tile">
-              <div class="wo-k">Pending for Approval</div><div class="wo-v">35</div>
+              <div class="wo-k">Pending for Approval</div>
+              <div class="wo-v" data-bind="wo.pending_approval"></div>
             </div>
           </div>
         </div>
@@ -35,28 +46,28 @@
     </div>
   </div>
 
-  <!-- Counters / KPI Cards يمين -->
+  <!-- KPIs يمين (بدون أرقام) -->
   <div class="lg:col-span-7 grid grid-cols-2 md:grid-cols-4 gap-3">
     <div class="slim-card">
       <div class="text-sm text-slate-600">Total</div>
-      <div class="text-2xl font-extrabold">4783</div>
+      <div class="kpi-v" data-bind="equip.total"></div>
     </div>
     <div class="slim-card">
       <div class="text-sm text-slate-600">Class A</div>
-      <div class="text-2xl font-extrabold">91</div>
+      <div class="kpi-v" data-bind="equip.class_a"></div>
     </div>
     <div class="slim-card">
       <div class="text-sm text-slate-600">Class B</div>
-      <div class="text-2xl font-extrabold">401</div>
+      <div class="kpi-v" data-bind="equip.class_b"></div>
     </div>
     <div class="slim-card">
       <div class="text-sm text-slate-600">Class C</div>
-      <div class="text-2xl font-extrabold">5103</div>
+      <div class="kpi-v" data-bind="equip.class_c"></div>
     </div>
   </div>
 </section>
 
-<!-- صف الرسوم -->
+<!-- الرسوم -->
 <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">
   <div class="lg:col-span-4 card chart-card">
     <div class="text-slate-500 text-sm mb-2">Tickets Status</div>
@@ -72,18 +83,18 @@
   </div>
 </section>
 
-<!-- Site Info بطاقات أسفل -->
+<!-- Site Info -->
 <section class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
   <div class="slim-card">
     <div class="text-sm text-slate-600">Total Departments</div>
-    <div class="text-xl font-extrabold">0</div>
+    <div class="kpi-v" data-bind="site.departments"></div>
   </div>
   <div class="slim-card">
     <div class="text-sm text-slate-600">Total Buildings</div>
-    <div class="text-xl font-extrabold">0</div>
+    <div class="kpi-v" data-bind="site.buildings"></div>
   </div>
   <div class="slim-card">
     <div class="text-sm text-slate-600">Total Rooms</div>
-    <div class="text-xl font-extrabold">0</div>
+    <div class="kpi-v" data-bind="site.rooms"></div>
   </div>
 </section>
