@@ -1,0 +1,110 @@
+/* ===== PPM Tabuk – Light Dashboard Theme (non-breaking) ===== */
+:root{
+  /* ألوان عامة */
+  --bg: #f6f7fb;
+  --text: #0f172a;
+  --muted: #64748b;
+
+  /* الحاويات */
+  --surface: #ffffff;
+  --surface-alt: #0e1527;       /* للوحة الداكنة (Work Orders) */
+  --border: #e5e7eb;
+  --shadow: 0 10px 30px rgba(2,6,23,0.08);
+
+  /* العلامة */
+  --brand: #3b82f6;   /* أزرق */
+  --brand-2: #60a5fa; /* أزرق أفتح */
+  --ok: #10b981;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+}
+
+html[dir="rtl"] body{
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* بطاقات عامة */
+.card{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+/* شريط أعلى أزرق rounded */
+.topbar{
+  background: var(--brand);
+  color: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(59,130,246,.25);
+}
+.topbar .icon-btn{
+  width: 38px; height: 38px;
+  display: inline-flex; align-items:center; justify-content:center;
+  border-radius: 10px; background: rgba(255,255,255,.15);
+  transition: .15s;
+}
+.topbar .icon-btn:hover{ background: rgba(255,255,255,.25); }
+.topbar .avatar{ width: 36px; height: 36px; border-radius: 10px; background:#fde68a; color:#111; display:flex; align-items:center; justify-content:center; font-weight:900 }
+
+/* لوحة Work Orders الداكنة */
+.wo-panel{
+  background: var(--surface-alt);
+  color: #f8fafc;
+  border-radius: 16px;
+  padding: 18px;
+}
+.wo-title{ font-weight: 900; font-size: 1.1rem }
+.wo-grid{
+  display:grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 10px;
+}
+.wo-tile{
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.wo-k{ font-size:.8rem; color:#cbd5e1 }
+.wo-v{ font-size:1.25rem; font-weight:900; }
+
+.wo-side{
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-weight:900; letter-spacing:.5px;
+  color:#94a3b8;
+}
+
+/* بطاقات أفقية رفيعة (مثل Site Info / Counters) */
+.slim-card{
+  background:#eef2ff;
+  border:1px dashed #c7d2fe;
+  color:#1e293b;
+  border-radius:12px;
+  padding:12px;
+}
+
+/* حاويات الرسوم */
+.chart-card{ padding:16px }
+
+/* شريط صفحات الجدول (لو موجود) يلائم اللايت */
+#pager{
+  background: #fff;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 16px 16px;
+}
+
+/* أزرار عامة */
+.btn{ padding:.55rem .9rem; border-radius:12px; font-weight:800 }
+.btn-ghost{ background:#eef2ff; color:#1e293b; border:1px solid #c7d2fe }
+.btn-brand{ background:#3b82f6; color:#fff }
+.btn-danger{ background:#ef4444; color:#fff }
+
+/* حقول */
+.field{
+  background:#fff; border:1px solid var(--border); border-radius:12px;
+  padding:.6rem .8rem; color:#0f172a;
+}
+.field:focus{ outline:none; border-color:#93c5fd; box-shadow:0 0 0 3px rgba(147,197,253,.35) }
