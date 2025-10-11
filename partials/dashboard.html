@@ -1,34 +1,89 @@
-<section class="grid grid-cols-2 md:grid-cols-4 gap-3">
-  <div class="card p-4">
-    <div class="text-sm text-slate-400">إجمالي (بعد الفلترة/الصلاحيات)</div>
-    <div id="k_total" class="text-2xl font-extrabold">0</div>
+<!-- صف علوي يحتوي لوحة Work Orders يسار & مؤشرات يمين -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+  <!-- Work Orders Panel -->
+  <div class="lg:col-span-5">
+    <div class="wo-panel">
+      <div class="flex items-start gap-3">
+        <div class="wo-side">There are many actions to do for your work orders now! • View All</div>
+        <div class="flex-1">
+          <div class="flex items-center justify-between">
+            <div class="wo-title">Work Orders</div>
+            <div class="text-2xl font-extrabold">4720</div>
+          </div>
+          <div class="wo-grid mt-3">
+            <div class="wo-tile">
+              <div class="wo-k">Active</div><div class="wo-v">17</div>
+            </div>
+            <div class="wo-tile">
+              <div class="wo-k">Closed</div><div class="wo-v">6</div>
+            </div>
+            <div class="wo-tile">
+              <div class="wo-k">Assigned</div><div class="wo-v">1</div>
+            </div>
+            <div class="wo-tile">
+              <div class="wo-k">Pending for Spare</div><div class="wo-v">6</div>
+            </div>
+            <div class="wo-tile">
+              <div class="wo-k">Signed Off</div><div class="wo-v">4655</div>
+            </div>
+            <div class="wo-tile">
+              <div class="wo-k">Pending for Approval</div><div class="wo-v">35</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="card p-4">
-    <div class="text-sm text-slate-400">تم هذا الشهر</div>
-    <div id="k_thisMonth" class="text-2xl font-extrabold">0</div>
-  </div>
-  <div class="card p-4">
-    <div class="text-sm text-slate-400">مستحق خلال 30 يوم</div>
-    <div id="k_dueSoon" class="text-2xl font-extrabold">0</div>
-  </div>
-  <div class="card p-4">
-    <div class="text-sm text-slate-400">متأخر (+30 بعد Next)</div>
-    <div id="k_overdue" class="text-2xl font-extrabold">0</div>
+
+  <!-- Counters / KPI Cards يمين -->
+  <div class="lg:col-span-7 grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="slim-card">
+      <div class="text-sm text-slate-600">Total</div>
+      <div class="text-2xl font-extrabold">4783</div>
+    </div>
+    <div class="slim-card">
+      <div class="text-sm text-slate-600">Class A</div>
+      <div class="text-2xl font-extrabold">91</div>
+    </div>
+    <div class="slim-card">
+      <div class="text-sm text-slate-600">Class B</div>
+      <div class="text-2xl font-extrabold">401</div>
+    </div>
+    <div class="slim-card">
+      <div class="text-sm text-slate-600">Class C</div>
+      <div class="text-2xl font-extrabold">5103</div>
+    </div>
   </div>
 </section>
 
-<section class="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-3">
-  <div class="card p-4">
-    <div class="mb-2 font-bold">توزيع الحالة</div>
-    <div class="chartBox"><canvas id="chStatus"></canvas></div>
+<!-- صف الرسوم -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">
+  <div class="lg:col-span-4 card chart-card">
+    <div class="text-slate-500 text-sm mb-2">Tickets Status</div>
+    <canvas id="ticketsChart" height="170"></canvas>
   </div>
-  <div class="card p-4">
-    <div class="mb-2 font-bold">PM حسب الشهر (آخر 6)</div>
-    <div class="chartBox"><canvas id="chMonthly"></canvas></div>
+  <div class="lg:col-span-4 card chart-card">
+    <div class="text-slate-500 text-sm mb-2">Total Equipment</div>
+    <canvas id="totalEqChart" height="170"></canvas>
   </div>
-  <div class="card p-4">
-    <div class="mb-2 font-bold">المواقع × شهور السنة</div>
-    <div class="chartBox"><canvas id="chSiteMonth"></canvas></div>
+  <div class="lg:col-span-4 card chart-card">
+    <div class="text-slate-500 text-sm mb-2">PPM in this year</div>
+    <canvas id="ppmYearChart" height="170"></canvas>
   </div>
 </section>
 
+<!-- Site Info بطاقات أسفل -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+  <div class="slim-card">
+    <div class="text-sm text-slate-600">Total Departments</div>
+    <div class="text-xl font-extrabold">0</div>
+  </div>
+  <div class="slim-card">
+    <div class="text-sm text-slate-600">Total Buildings</div>
+    <div class="text-xl font-extrabold">0</div>
+  </div>
+  <div class="slim-card">
+    <div class="text-sm text-slate-600">Total Rooms</div>
+    <div class="text-xl font-extrabold">0</div>
+  </div>
+</section>
