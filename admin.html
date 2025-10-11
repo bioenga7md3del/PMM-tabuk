@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>إدارة المستخدمين • PPM TABUK</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{background:#0b1220;color:#e5e7eb}
+    .card{background:#111827;border:1px solid #1f2937;border-radius:16px;box-shadow:0 12px 36px rgba(0,0,0,.35)}
+    .notice{position:sticky;top:0;z-index:50;text-align:center;font-weight:800}
+    .n-ok{background:rgba(16,185,129,.15);border-bottom:1px solid rgba(16,185,129,.5);color:#a7f3d0}
+    .n-err{background:rgba(239,68,68,.15);border-bottom:1px solid rgba(239,68,68,.5);color:#fecaca}
+    .n-info{background:rgba(59,130,246,.15);border-bottom:1px solid rgba(59,130,246,.5);color:#bfdbfe}
+    table td,table th{white-space:nowrap}
+    .pill{padding:.2rem .5rem;border-radius:999px;font-size:.75rem;font-weight:800}
+    .role-admin{background:#fde68a;color:#78350f}
+    .role-engineer{background:#bfdbfe;color:#1e3a8a}
+    .role-tech{background:#bbf7d0;color:#14532d}
+    .role-viewer{background:#e5e7eb;color:#111827}
+    .modal{background:#ffffff !important;color:#0f172a !important}
+    .modal input,.modal select{background:#f8fafc !important;color:#0f172a !important;border:1px solid #cbd5e1 !important;border-radius:10px;padding:10px}
+    .pick-col{border:1px solid #cbd5e1;border-radius:12px;background:#fff}
+    .pick-list{max-height:220px;overflow:auto}
+    .pick-item{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem .6rem;border-bottom:1px dashed #e5e7eb;cursor:pointer}
+    .pick-item:hover{background:#f1f5f9}
+    .chip{display:inline-flex;align-items:center;gap:.35rem;background:#0ea5e9;color:#072d3b;border-radius:999px;padding:.25rem .5rem;margin:.25rem;font-weight:700}
+    .chip button{background:transparent;border:0;font-weight:900;cursor:pointer}
+  </style>
+</head>
+<body class="min-h-screen">
+  <div id="notice" class="notice n-info w-full py-2">جارِ التحقق من الصلاحيات…</div>
+
+  <header class="sticky top-0 z-30 bg-slate-900/80 backdrop-blur border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="font-extrabold text-xl flex items-center gap-2">
+        <span class="text-sky-400">👑</span> إدارة المستخدمين
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="index.html" class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 hover:opacity-90">← الرجوع للوحة</a>
+        <button id="btnLogout" class="px-3 py-2 rounded bg-red-500 text-white font-bold">خروج</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <!-- إضافة/تحديث مستخدم -->
+    <section class="card p-4">
+      <h2 class="text-lg font-extrabold mb-3">➕ إضافة مستخدم إلى قاعدة البيانات (users)</h2>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div><label class="block mb-1 text-slate-300">UID (مطلوب)</label><input id="nu_uid" class="w-full px-3 py-2 rounded bg-slate-950 border border-slate-800" placeholder="مثال: H8Xs...A1"/></div>
+        <div><label class="block mb-1 text-slate-300">Email</label><input id="nu_email" type="email" class="w-full px-3 py-2 rounded bg-slate-950 border border-slate-800" placeholder="user@domain.com"/></div>
+        <div><label class="block mb-1 text-slate-300">الاسم</label><input id="nu_name" class="w-full px-3 py-2 rounded bg-slate-950 border border-slate-800" placeholder="اسم المستخدم"/></div>
+        <div>
+          <label class="block mb-1 text-slate-300">الدور</label>
+          <select id="nu_role" class="w-full px-3 py-2 rounded bg-slate-950 border border-slate-800">
+            <option value="viewer">viewer</option><option value="tech">tech</option><option value="engineer">engineer</option><option value="admin">admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+        <div>
+          <div class="mb-2 font-bold">المواقع المسموح بها</div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="pick-col">
+              <input id="nu_sitesSearch" class="w-full border-0 border-b border-slate-200 rounded-none px-3 py-2" placeholder="ابحث عن موقع…"/>
+              <div id="nu_sitesList" class="pick-list"></div>
+            </div>
+            <div class="pick-col p-2">
+              <div class="text-sm text-slate-600 mb-1">المختارة:</div>
+              <div id="nu_sitesChosen" class="min-h-[44px]"></div>
+              <input id="nu_sitesExtra" class="mt-2 w-full px-3 py-2 border border-slate-200 rounded-lg" placeholder="إضافات يدوية (بفواصل)"/>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="mb-2 font-bold">الأقسام المسموح بها</div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="pick-col">
+              <input id="nu_deptsSearch" class="w-full border-0 border-b border-slate-200 rounded-none px-3 py-2" placeholder="ابحث عن قسم…"/>
+              <div id="nu_deptsList" class="pick-list"></div>
+            </div>
+            <div class="pick-col p-2">
+              <div class="text-sm text-slate-600 mb-1">المختارة:</div>
+              <div id="nu_deptsChosen" class="min-h-[44px]"></div>
+              <input id="nu_deptsExtra" class="mt-2 w-full px-3 py-2 border border-slate-200 rounded-lg" placeholder="إضافات يدوية (بفواصل)"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button id="nu_save" class="px-4 py-2 rounded bg-sky-600 text-white font-bold hover:opacity-90">حفظ في users</button>
+      </div>
+    </section>
+
+    <!-- قائمة المستخدمين -->
+    <section class="card p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-extrabold">👥 جميع المستخدمين</h2>
+        <div class="flex items-center gap-2">
+          <input id="q" placeholder="بحث بالاسم أو البريد…" class="w-64 px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 text-white"/>
+          <button id="btnRefresh" class="px-3 py-2 rounded bg-slate-700 hover:opacity-90">تحديث</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-800 text-slate-200">
+            <tr>
+              <th class="p-3 text-right">الاسم</th>
+              <th class="p-3 text-right">البريد</th>
+              <th class="p-3 text-right">الدور</th>
+              <th class="p-3 text-right">المواقع</th>
+              <th class="p-3 text-right">الأقسام</th>
+              <th class="p-3 text-right">أدوات</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- نافذة تعديل -->
+  <div id="editModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center">
+    <div class="modal rounded-xl p-5 w-full max-w-4xl shadow-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-bold">تعديل مستخدم</h3>
+        <button id="closeEdit" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">✕</button>
+      </div>
+      <input id="e_uid" type="hidden"/>
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+        <input id="e_name"  placeholder="الاسم"  class="md:col-span-2"/>
+        <input id="e_email" placeholder="البريد" class="md:col-span-2"/>
+        <select id="e_role"  class="md:col-span-2">
+          <option value="viewer">viewer</option><option value="tech">tech</option><option value="engineer">engineer</option><option value="admin">admin</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+        <div>
+          <div class="mb-2 font-bold">المواقع</div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="pick-col">
+              <input id="e_sitesSearch" class="w-full border-0 border-b border-slate-200 rounded-none px-3 py-2" placeholder="ابحث عن موقع…"/>
+              <div id="e_sitesList" class="pick-list"></div>
+            </div>
+            <div class="pick-col p-2">
+              <div class="text-sm text-slate-600 mb-1">المختارة:</div>
+              <div id="e_sitesChosen" class="min-h-[44px]"></div>
+              <input id="e_sitesExtra" class="mt-2 w-full px-3 py-2 border border-slate-200 rounded-lg" placeholder="إضافات يدوية (بفواصل)"/>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="mb-2 font-bold">الأقسام</div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="pick-col">
+              <input id="e_deptsSearch" class="w-full border-0 border-b border-slate-200 rounded-none px-3 py-2" placeholder="ابحث عن قسم…"/>
+              <div id="e_deptsList" class="pick-list"></div>
+            </div>
+            <div class="pick-col p-2">
+              <div class="text-sm text-slate-600 mb-1">المختارة:</div>
+              <div id="e_deptsChosen" class="min-h-[44px]"></div>
+              <input id="e_deptsExtra" class="mt-2 w-full px-3 py-2 border border-slate-200 rounded-lg" placeholder="إضافات يدوية (بفواصل)"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button id="saveEdit" class="px-4 py-2 rounded bg-sky-600 text-white font-bold hover:opacity-90">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './js/firebase.js';
+    import { initRoles, canManageUsers, bindLogout } from './js/roles.js';
+    import { collection, getDocs, setDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const $ = s=>document.querySelector(s);
+    const notice=(m,t='info')=>{ const n=$('#notice'); n.textContent=m; n.className='notice '+(t==='ok'?'n-ok':t==='error'?'n-err':'n-info'); };
+
+    // === Pickers (sites/departments) ===
+    const pickers = {};
+    function buildPicker(key, items, preselected=[]){
+      const inputSearch = document.getElementById(key+'Search');
+      const listEl      = document.getElementById(key+'List');
+      const chosenEl    = document.getElementById(key+'Chosen');
+      const chosen = new Set(preselected||[]);
+      function renderList(){
+        const q=(inputSearch.value||'').toLowerCase().trim();
+        listEl.innerHTML='';
+        items.filter(v=>!q || v.toLowerCase().includes(q)).forEach(val=>{
+          const div=document.createElement('div');
+          div.className='pick-item';
+          div.innerHTML=`<span>${val}</span><span class="text-slate-400">+</span>`;
+          div.onclick=()=>{ if(!chosen.has(val)){ chosen.add(val); renderChosen(); } };
+          listEl.appendChild(div);
+        });
+      }
+      function renderChosen(){
+        chosenEl.innerHTML='';
+        Array.from(chosen).sort().forEach(val=>{
+          const chip=document.createElement('span');
+          chip.className='chip';
+          chip.innerHTML=`<span>${val}</span><button title="إزالة">✕</button>`;
+          chip.querySelector('button').onclick=()=>{ chosen.delete(val); renderChosen(); };
+          chosenEl.appendChild(chip);
+        });
+      }
+      inputSearch.oninput=renderList; renderList(); renderChosen();
+      pickers[key]={ get:()=>Array.from(chosen), set:(arr)=>{ chosen.clear(); (arr||[]).forEach(v=>chosen.add(v)); renderChosen(); } };
+    }
+
+    let ALL_SITES=[], ALL_DEPTS=[];
+    async function loadAssetsLookups(){
+      const qs = await getDocs(query(collection(db,'assets'), orderBy('site')));
+      const s=new Set(), d=new Set();
+      qs.forEach(docu=>{ const x=docu.data(); if(x.site) s.add(x.site); if(x.department) d.add(x.department); });
+      ALL_SITES=[...s].sort(); ALL_DEPTS=[...d].sort();
+      buildPicker('nu_sites', ALL_SITES, []);
+      buildPicker('nu_depts', ALL_DEPTS, []);
+    }
+
+    // === Users table ===
+    let users=[], filtered=[];
+    function rolePill(role){ const map={admin:'role-admin',engineer:'role-engineer',tech:'role-tech',viewer:'role-viewer'}; return `<span class="pill ${map[role]||'role-viewer'}">${role||'viewer'}</span>`; }
+
+    function renderTable(){
+      const q = ($('#q').value||'').toLowerCase().trim();
+      filtered = users.filter(u=> !q || (String(u.name||'').toLowerCase().includes(q) || String(u.email||'').toLowerCase().includes(q)));
+      const tb = document.getElementById('tbody'); tb.innerHTML='';
+      filtered.forEach(u=>{
+        const tr=document.createElement('tr'); tr.className='border-b border-slate-800';
+        const sites = Array.isArray(u.sites)? u.sites.join(', ') : '';
+        const depts = Array.isArray(u.departments)? u.departments.join(', ') : '';
+        tr.innerHTML = `
+          <td class="p-3">${u.name||'—'}</td>
+          <td class="p-3">${u.email||'—'}</td>
+          <td class="p-3">${rolePill(u.role||'viewer')}</td>
+          <td class="p-3">${sites||'—'}</td>
+          <td class="p-3">${depts||'—'}</td>
+          <td class="p-3">
+            <div class="flex gap-2">
+              <button class="px-2 py-1 rounded bg-sky-500 text-sky-950 font-bold hover:opacity-90" data-edit="${u.id}">تعديل</button>
+              <button class="px-2 py-1 rounded bg-red-600 text-white font-bold hover:opacity-90" data-del="${u.id}">حذف</button>
+            </div>
+          </td>`;
+        tb.appendChild(tr);
+      });
+    }
+
+    async function loadUsers(){
+      notice('جارِ تحميل المستخدمين…');
+      const qs = await getDocs(query(collection(db,'users'), orderBy('email')));
+      users = qs.docs.map(d=> ({ id: d.id, ...d.data() }));
+      renderTable();
+      notice('تم التحميل ✅','ok');
+    }
+
+    // === Edit modal ===
+    const editModal = document.getElementById('editModal');
+    const openEdit = ()=>{ editModal.classList.remove('hidden'); editModal.classList.add('flex'); };
+    const closeEdit = ()=>{ editModal.classList.add('hidden'); editModal.classList.remove('flex'); };
+    document.getElementById('closeEdit').onclick = closeEdit;
+
+    document.addEventListener('click', async (e)=>{
+      const editBtn = e.target.closest('button[data-edit]');
+      const delBtn  = e.target.closest('button[data-del]');
+      if(editBtn){
+        const uid = editBtn.dataset.edit;
+        const u = users.find(x=> x.id===uid); if(!u) return;
+        document.getElementById('e_uid').value = uid;
+        document.getElementById('e_name').value = u.name||'';
+        document.getElementById('e_email').value= u.email||'';
+        document.getElementById('e_role').value = u.role||'viewer';
+        buildPicker('e_sites', ALL_SITES, u.sites||[]);
+        buildPicker('e_depts', ALL_DEPTS, u.departments||[]);
+        document.getElementById('e_sitesExtra').value=''; document.getElementById('e_deptsExtra').value='';
+        openEdit();
+      }
+      if(delBtn){
+        const uid = delBtn.dataset.del;
+        if(!confirm('سيتم حذف مستند المستخدم من Firestore فقط. متابعة؟')) return;
+        await deleteDoc(doc(db,'users', uid)); await loadUsers(); notice('تم الحذف ✅','ok');
+      }
+    });
+
+    document.getElementById('saveEdit').addEventListener('click', async ()=>{
+      const uid = document.getElementById('e_uid').value;
+      const name  = document.getElementById('e_name').value.trim();
+      const email = document.getElementById('e_email').value.trim();
+      const role  = document.getElementById('e_role').value;
+      let sites = (pickers['e_sites']?.get()||[]);
+      let depts = (pickers['e_depts']?.get()||[]);
+      const sExtra = (document.getElementById('e_sitesExtra').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const dExtra = (document.getElementById('e_deptsExtra').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      sites = Array.from(new Set([...sites,...sExtra])); depts = Array.from(new Set([...depts,...dExtra]));
+      await updateDoc(doc(db,'users', uid), { name, email, role, sites, departments: depts, updatedAt: serverTimestamp() });
+      closeEdit(); await loadUsers(); notice('تم التحديث ✅','ok');
+    });
+
+    document.getElementById('nu_save').addEventListener('click', async ()=>{
+      const uid = document.getElementById('nu_uid').value.trim();
+      const email = document.getElementById('nu_email').value.trim();
+      const name  = document.getElementById('nu_name').value.trim();
+      const role  = document.getElementById('nu_role').value;
+      if(!uid){ notice('UID مطلوب لإنشاء المستند','error'); return; }
+      let sites = (pickers['nu_sites']?.get()||[]);
+      let depts = (pickers['nu_depts']?.get()||[]);
+      const sExtra = (document.getElementById('nu_sitesExtra').value||'').split(',').map(x=>x.trim()).filter(Boolean);
+      const dExtra = (document.getElementById('nu_deptsExtra').value||'').split(',').map(x=>x.trim()).filter(Boolean);
+      sites = Array.from(new Set([...sites,...sExtra])); depts = Array.from(new Set([...depts,...dExtra]));
+      await setDoc(doc(db,'users', uid), { name, email, role, sites, departments: depts, updatedAt: serverTimestamp() }, { merge:true });
+      await loadUsers(); notice('تم الحفظ ✅','ok');
+    });
+
+    // === Boot ===
+    window.addEventListener('error', e=> notice('خطأ: '+(e.error?.message||e.message),'error'));
+    window.addEventListener('unhandledrejection', e=> notice('خطأ: '+(e.reason?.message||e.reason),'error'));
+
+    (async function boot(){
+      await initRoles();
+      bindLogout();
+      if(!canManageUsers()){ notice('هذه الصفحة للمشرف فقط. سيتم تحويلك للوحة…','error'); setTimeout(()=>location.href='index.html',1200); return; }
+      await loadAssetsLookups();
+      await loadUsers();
+    })();
+
+    document.getElementById('btnRefresh').addEventListener('click', loadUsers);
+    document.getElementById('q').addEventListener('input', renderTable);
+  </script>
+</body>
+</html>
