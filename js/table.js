@@ -4,15 +4,18 @@ import { canWrite, canTouchAsset } from './roles.js';
 
 // ===== Pagination State =====
 let currentPage = 1;
-let pageSize = 50; // الافتراضي 50
+let pageSize = 50; // الافتراضي 50، ويمكن يكون "all"
 
 export function setPage(n){
   currentPage = Math.max(1, parseInt(n||1,10));
   renderTable();
 }
 export function setPageSize(n){
-  const v = parseInt(n||50,10);
-  pageSize = (isNaN(v) || v<=0) ? 50 : v;
+  if(n === 'all'){ pageSize = 'all'; }
+  else{
+    const v = parseInt(n||50,10);
+    pageSize = (isNaN(v) || v<=0) ? 50 : v;
+  }
   currentPage = 1;
   renderTable();
 }
@@ -23,10 +26,10 @@ export function renderTable(){
 
   // ===== Compute & update pager UI =====
   const total = list.length;
-  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const pages = (pageSize === 'all') ? 1 : Math.max(1, Math.ceil(total / pageSize));
   if(currentPage > pages) currentPage = pages;
-  const start = (currentPage - 1) * pageSize;
-  const rows = list.slice(start, start + pageSize);
+  const start = (pageSize === 'all') ? 0 : (currentPage - 1) * pageSize;
+  const rows  = (pageSize === 'all') ? list : list.slice(start, start + pageSize);
 
   const pageStats = document.getElementById('pageStats');
   const pageInfo  = document.getElementById('pageInfo');
@@ -36,16 +39,16 @@ export function renderTable(){
 
   if(pageStats) pageStats.textContent = total ? `عرض ${start+1}–${Math.min(start+rows.length,total)} من ${total}` : 'لا توجد نتائج';
   if(pageInfo)  pageInfo.textContent  = `${currentPage}/${pages}`;
-  if(sizeSel && parseInt(sizeSel.value,10)!==pageSize){ sizeSel.value = String(pageSize); }
-  if(prevBtn){ prevBtn.disabled = currentPage<=1; prevBtn.classList.toggle('opacity-50', prevBtn.disabled); }
-  if(nextBtn){ nextBtn.disabled = currentPage>=pages; nextBtn.classList.toggle('opacity-50', nextBtn.disabled); }
+  if(sizeSel && String(sizeSel.value)!==String(pageSize)){ sizeSel.value = String(pageSize); }
+  if(prevBtn){ prevBtn.disabled = currentPage<=1 || pageSize==='all'; prevBtn.classList.toggle('opacity-50', prevBtn.disabled); }
+  if(nextBtn){ nextBtn.disabled = currentPage>=pages || pageSize==='all'; nextBtn.classList.toggle('opacity-50', nextBtn.disabled); }
 
   // Bind once
   if(!window.__pagerBound){
     window.__pagerBound = true;
     prevBtn?.addEventListener('click', ()=>{ if(currentPage>1){ currentPage--; renderTable(); } });
-    nextBtn?.addEventListener('click', ()=>{ const p=Math.max(1, Math.ceil(getFiltered().length / pageSize)); if(currentPage<p){ currentPage++; renderTable(); } });
-    sizeSel?.addEventListener('change', (e)=>{ const v=parseInt(e.target.value,10)||50; pageSize=v; currentPage=1; renderTable(); });
+    nextBtn?.addEventListener('click', ()=>{ const p=(pageSize==='all')?1:Math.max(1, Math.ceil(getFiltered().length / pageSize)); if(currentPage<p){ currentPage++; renderTable(); } });
+    sizeSel?.addEventListener('change', (e)=>{ const v=e.target.value; setPageSize(v); });
   }
 
   // ===== Render visible rows =====
@@ -87,7 +90,7 @@ function refreshBulkButton(){
   else { btn.classList.add('opacity-60'); btn.disabled=true; }
 }
 
-// حافظنا على اختيار الكل + تحديث زر الحذف الجماعي
+// تحديث زر الحذف الجماعي
 document.addEventListener('change', (e)=>{
   if(e.target && e.target.matches('input[type="checkbox"][data-chk], #chkAll')){
     if(e.target.id==='chkAll'){
@@ -98,9 +101,6 @@ document.addEventListener('change', (e)=>{
         if(canTouchAsset(row) && canWrite()) c.checked=state;
       });
     }
-    const btn = document.getElementById('btnBulkDelete');
-    const checked = Array.from(document.querySelectorAll('input[type="checkbox"][data-chk]:checked')).length;
-    if(checked>0 && canWrite()){ btn.classList.remove('opacity-60'); btn.disabled=false; }
-    else { btn.classList.add('opacity-60'); btn.disabled=true; }
+    refreshBulkButton();
   }
 });
