@@ -1,100 +1,64 @@
-<!-- صف علوي: Work Orders داكنة + KPIs -->
-<section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-  <!-- Work Orders -->
-  <div class="lg:col-span-5">
-    <div class="wo-panel">
-      <div class="flex items-start gap-3">
-        <div class="wo-side hidden md:block">
-          There are many actions to do for your work orders now! • View All
-        </div>
-        <div class="flex-1">
-          <div class="flex items-center justify-between">
-            <div class="wo-title">Work Orders</div>
-            <div class="text-2xl font-extrabold">
-              <span class="wo-v" data-bind="wo.total"></span>
-            </div>
-          </div>
-
-          <div class="wo-grid mt-3">
-            <div class="wo-tile">
-              <div class="wo-k">Active</div>
-              <div class="wo-v" data-bind="wo.active"></div>
-            </div>
-            <div class="wo-tile">
-              <div class="wo-k">Closed</div>
-              <div class="wo-v" data-bind="wo.closed"></div>
-            </div>
-            <div class="wo-tile">
-              <div class="wo-k">Assigned</div>
-              <div class="wo-v" data-bind="wo.assigned"></div>
-            </div>
-            <div class="wo-tile">
-              <div class="wo-k">Pending for Spare</div>
-              <div class="wo-v" data-bind="wo.pending_spare"></div>
-            </div>
-            <div class="wo-tile">
-              <div class="wo-k">Signed Off</div>
-              <div class="wo-v" data-bind="wo.signed_off"></div>
-            </div>
-            <div class="wo-tile">
-              <div class="wo-k">Pending for Approval</div>
-              <div class="wo-v" data-bind="wo.pending_approval"></div>
-            </div>
-          </div>
-        </div>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>PPM TABUK • Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/theme-light.css">
+</head>
+<body>
+  <!-- Header المشترك -->
+  <?!-- لو ما عندك include-side، انسخ نفس كود header.html هنا -->
+  <!-- بداية الهيدر -->
+  <header class="max-w-7xl mx-auto px-3 md:px-6 mt-3">
+    <div class="topbar px-3 md:px-4 py-2 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <button class="icon-btn" title="القائمة">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <nav class="flex items-center gap-3 text-white/90">
+        <a href="dashboard.html" class="font-bold">Dashboard</a>
+        <a href="assets.html" class="opacity-80 hover:opacity-100">الأجهزة</a>
+        <a href="preventive.html" class="opacity-80 hover:opacity-100">الصيانة الوقائية</a>
+        <a href="corrective.html" class="opacity-80 hover:opacity-100">الصيانة التصحيحية</a>
+        <a href="sites.html" class="opacity-80 hover:opacity-100">المواقع</a>
+        <a href="users.html" class="opacity-80 hover:opacity-100" id="navAdmin">المستخدمون</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <div class="avatar">👤</div>
       </div>
     </div>
-  </div>
+  </header>
+  <!-- نهاية الهيدر -->
 
-  <!-- KPIs يمين (بدون أرقام) -->
-  <div class="lg:col-span-7 grid grid-cols-2 md:grid-cols-4 gap-3">
-    <div class="slim-card">
-      <div class="text-sm text-slate-600">Total</div>
-      <div class="kpi-v" data-bind="equip.total"></div>
-    </div>
-    <div class="slim-card">
-      <div class="text-sm text-slate-600">Class A</div>
-      <div class="kpi-v" data-bind="equip.class_a"></div>
-    </div>
-    <div class="slim-card">
-      <div class="text-sm text-slate-600">Class B</div>
-      <div class="kpi-v" data-bind="equip.class_b"></div>
-    </div>
-    <div class="slim-card">
-      <div class="text-sm text-slate-600">Class C</div>
-      <div class="kpi-v" data-bind="equip.class_c"></div>
-    </div>
-  </div>
-</section>
+  <main class="max-w-7xl mx-auto p-3 md:p-6 space-y-6">
+    <!-- Work Orders + KPIs (قيم فاضية جاهزة للربط) -->
+    <!-- نفس البلوك اللي أرسلته لك سابقًا بدون أرقام ثابتة -->
+    <!-- … انسخ من آخر نسخة Dashboard أرسلتها لك (في رسالتي السابقة) … -->
 
-<!-- الرسوم -->
-<section class="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">
-  <div class="lg:col-span-4 card chart-card">
-    <div class="text-slate-500 text-sm mb-2">Tickets Status</div>
-    <canvas id="ticketsChart" height="170"></canvas>
-  </div>
-  <div class="lg:col-span-4 card chart-card">
-    <div class="text-slate-500 text-sm mb-2">Total Equipment</div>
-    <canvas id="totalEqChart" height="170"></canvas>
-  </div>
-  <div class="lg:col-span-4 card chart-card">
-    <div class="text-slate-500 text-sm mb-2">PPM in this year</div>
-    <canvas id="ppmYearChart" height="170"></canvas>
-  </div>
-</section>
+    <!-- الرسوم -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">
+      <div class="lg:col-span-4 card chart-card">
+        <div class="text-slate-500 text-sm mb-2">Tickets Status</div>
+        <canvas id="ticketsChart" height="170"></canvas>
+      </div>
+      <div class="lg:col-span-4 card chart-card">
+        <div class="text-slate-500 text-sm mb-2">Total Equipment</div>
+        <canvas id="totalEqChart" height="170"></canvas>
+      </div>
+      <div class="lg:col-span-4 card chart-card">
+        <div class="text-slate-500 text-sm mb-2">PPM in this year</div>
+        <canvas id="ppmYearChart" height="170"></canvas>
+      </div>
+    </section>
+  </main>
 
-<!-- Site Info -->
-<section class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
-  <div class="slim-card">
-    <div class="text-sm text-slate-600">Total Departments</div>
-    <div class="kpi-v" data-bind="site.departments"></div>
-  </div>
-  <div class="slim-card">
-    <div class="text-sm text-slate-600">Total Buildings</div>
-    <div class="kpi-v" data-bind="site.buildings"></div>
-  </div>
-  <div class="slim-card">
-    <div class="text-sm text-slate-600">Total Rooms</div>
-    <div class="kpi-v" data-bind="site.rooms"></div>
-  </div>
-</section>
+  <script type="module">
+    import { initRoles } from './js/roles.js';
+    import './js/charts.js'; // لو charts.js بيقرأ canvases بالـ IDs دي
+    (async ()=>{ await initRoles(); })();
+  </script>
+</body>
+</html>
