@@ -108,3 +108,15 @@ html[dir="rtl"] body{
   padding:.6rem .8rem; color:#0f172a;
 }
 .field:focus{ outline:none; border-color:#93c5fd; box-shadow:0 0 0 3px rgba(147,197,253,.35) }
+
+/* قيم فاضية تظهر كشرطة أنيقة */
+.wo-v:empty::before,
+.kpi-v:empty::before{
+  content: '—';
+  opacity: .45;
+}
+
+/* تحسين تباعد البلاطات والكروت عشان ما تبقاش متمددة زيادة */
+.wo-panel{ padding: 20px }
+.wo-grid .wo-tile{ min-height: 66px; display:flex; flex-direction:column; justify-content:center }
+.slim-card{ min-height: 70px; display:flex; flex-direction:column; justify-content:center }
